@@ -221,6 +221,9 @@ class TwoPLPashaExecutor : public Executor<Workload, TwoPLPasha<typename Workloa
                                                 // try to acquire the lock
                                                 std::atomic<uint64_t> &meta = *reinterpret_cast<std::atomic<uint64_t> *>(meta_ptr);
                                                 bool lock_success = false;
+                                                // Note: Theoretically, we do not need to update the local cache for the next key,
+                                                // as we just need to lock it to avoid phantoms. But for simplicity, we always update
+                                                // the local cache whenever we access a CXL-resident local tuple.
                                                 if (type == TwoPLPashaRWKey::SCAN_FOR_READ) {
                                                         twopl_pasha_global_helper->read_lock(meta, data_ptr, table->value_size(), lock_success);
                                                 } else if (type == TwoPLPashaRWKey::SCAN_FOR_UPDATE) {

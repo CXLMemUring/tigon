@@ -1,6 +1,8 @@
 # Tigon
 Tigon[^1] is a research distributed transactional in-memory database that synchronizes cross-host concurrent data accesses over shared CXL memory. Tigon adopts the Pasha architecture[^2].
 This repository is implemented based on the [lotus](https://github.com/DBOS-project/lotus) codebase from Xinjing Zhou.
+The in-memory B+Tree implementation is adapted from [btreeolc](https://github.com/zxjcarrot/2-Tree/tree/master/backend/btreeolc).
+The lock-free MPSC ringbuffer used for implementing CXL transport is adapted from [waitfree-mpsc-queue](https://github.com/dbittman/waitfree-mpsc-queue).
 
 This repository contains the following:
 * An implementation of Tigon
@@ -13,10 +15,10 @@ This repository contains the following:
 
 ## Claims
 By running the experiments, you should be able to reproduce the numbers shown in:
-* **Figure 5(a)**: TPC-C throughput of Sundial, Sundial-CXL, and Sundial+, varying percentages of multi-partition transactions
-* **Figure 5(b)**: TPC-C throughput of DS2PL, DS2PL-CXL, and DS2PL+, varying percentages of multi-partition transactions
-* **Figure 5(c)**: TPC-C throughput of Tigon, Sundial+, DS2PL+, and Motor, varying percentages of multi-partition transactions
-* **Figure 6**: YCSB throughput of Tigon, Sundial+, DS2PL+, and Motor, varying both read/write ratios and percentages of multi-partition transactions
+* **Figure 4(a)**: TPC-C throughput of Sundial, Sundial-CXL, and Sundial+, varying percentages of multi-partition transactions
+* **Figure 4(b)**: TPC-C throughput of DS2PL, DS2PL-CXL, and DS2PL+, varying percentages of multi-partition transactions
+* **Figure 4(c)**: TPC-C throughput of Tigon, Sundial+, DS2PL+, and Motor, varying percentages of multi-partition transactions
+* **Figure 5**: YCSB throughput of Tigon, Sundial+, DS2PL+, and Motor, varying both read/write ratios and percentages of multi-partition transactions
 * **Figure 7**: Tigon's sensitivity to the size of hardware cache-coherent region
 * **Figure 8**: Comparison of different software cache-coherence protocols
 
@@ -27,7 +29,7 @@ We emulate a CXL pod by running multiple virtual machines (VMs) on a single host
 
 ## Important Notes
 * Since Motor[^5] (one of our baselines) requires special hardware (4 machines connected via RDMA), we provide pre-measured raw numbers in ``results/motor``. If you would like to run Motor, please refer to https://github.com/minghust/motor
-* Please run all the commands under the project root directory
+* Please run all commands under project root directory
 
 ## Testbed Setup
 
@@ -104,7 +106,7 @@ We provide an all-in-one script for your convenience, which runs all the experim
 
 We recommend running it overnight using tmux.
 ```bash
-./scripts/push_button.sh results/test1 # use a different directory name under results each time to avoid overwriting old results
+./scripts/push_button.sh results/test1
 ```
 
 To inteprete the results:
@@ -180,41 +182,42 @@ TPC-C Specific Arguments:
 * ``REMOTE_PAYMENT_PERC``: Percentage of remote Payment transactions (0-100)
 
 YCSB Specific Arguments:
-* ``QUERY_TYPE``: Query type to run. ``rmw`` includes standard YCSB read/write queries; ``custom`` includes mixed inserts/deletes
+* ``QUERY_TYPE``: Query type to run. ``rmw`` includes standard YCSB read/write queries; ``scan`` runs range queries; ``custom`` includes mixed inserts/deletes
 * ``KEYS``: Number of KV pairs per host
-* ``RW_RATIO``: Ratio of read/write operations. e.g., 50 means 50% read and 50% write
-* ``ZIPF_THETA``: Skewness factor for Zipfian distribution (0-1)
+* ``RW_RATIO``: Ratio of read/write operations (e.g., 50 means 50% read and 50% write)
+* ``ZIPF_THETA``: Skewness factor for Zipfian distribution
 * ``CROSS_RATIO``: Percentage of remote operations within a transaction (0-100)
 
 Common Arguments:
-* ``SYSTEM``: System to run. ``Sundial``, ``TwoPL``, ``TwoPLPasha`` (Tigon), ``TwoPLPashaPhantom`` (Tigon with phantom detection disabled), ``SundialPasha`` (Sundial adopting the Pasha architecture).
+* ``SYSTEM``: System to run. ``Sundial``, ``TwoPL``, ``TwoPLPasha`` (Tigon), ``TwoPLPashaPhantom`` (Tigon with phantom avoidance disabled), ``SundialPasha`` (Sundial adopting the Pasha architecture).
 * ``HOST_NUM``: Number of hosts
 * ``WORKER_NUM``: Number of transaction workers per host
-* ``USE_CXL_TRANS``: Enable/disable CXL transport
-* ``USE_OUTPUT_THREAD``: Enable/disable repurposing output threads for transaction processing. If enabled, ``USE_CXL_TRANS`` must also be enabled
-* ``ENABLE_MIGRATION_OPTIMIZATION``: Enable/disable data movement optimization
+* ``USE_CXL_TRANS``: Enable/Disable CXL transport
+* ``USE_OUTPUT_THREAD``: Enable/Disable repurposing output threads for transaction processing. If enabled, ``USE_CXL_TRANS`` must also be enabled
+* ``ENABLE_MIGRATION_OPTIMIZATION``: Enable/Disable data movement optimization
 * ``MIGRATION_POLICY``: Migration policy to use. ``Clock``, ``LRU``, ``FIFO``, ``NoMoveOut``
 * ``WHEN_TO_MOVE_OUT``: When to move out data. ``OnDemand`` triggers data moving out only when CXL memory is full
 * ``HW_CC_BUDGET``: Size of hardware cache-coherent region (in bytes)
-* ``ENABLE_SCC``: Enable/disable software cache-coherence
-* ``SCC_MECH``: Software cache-coherence protocol to use. ``WriteThrough`` is Tigon's default protocol; ``WriteThroughNoSharedRead`` disables shared reader; ``NonTemporal`` always do non-temporal access; ``NoOP`` always do temporal access, assuming full hardware cache-coherence
+* ``ENABLE_SCC``: Enable/Disable software cache coherence
+* ``SCC_MECH``: Software cache coherence protocol to use. ``WriteThrough`` is Tigon's default protocol; ``WriteThroughNoSharedRead`` disables shared reader; ``NonTemporal`` always do non-temporal access; ``NoOP`` always do temporal access, assuming full hardware cache coherence
 * ``PRE_MIGRATE``: Pre-migrate data before experiments. ``None`` migrates nothing; ``NonPart`` migrates non-partitionable data; ``All`` migrates all data
 * ``TIME_TO_RUN``: Total run time in seconds, including warmup time
 * ``TIME_TO_WARMUP``: Warmup time in seconds
 * ``LOGGING_TYPE``: Logging mechanism to use. ``BLACKHOLE`` disables logging. ``GROUP_WAL`` enables epoch-based group commit
 * ``EPOCH_LEN``: Epoch length (ms). Effective only when epoch-based group commit is enabled
-* ``MODEL_CXL_SEARCH``: Enable/disable the shortcut pointer optimization
-* ``GATHER_OUTPUTS``: Enable/disable collecting outputs from all hosts. If disabled, only the output of the first host is shown
+* ``MODEL_CXL_SEARCH``: Enable/Disable the shortcut pointer optimization
+* ``GATHER_OUTPUTS``: Enable/Disable collecting outputs from all hosts. If disabled, only the output of the first host is shown
 
 This script will print out statistics every second during the experiment, such as transaction throughput, abort rate and data movement frequency, and averaged statistics at the end.
 
-## Publication
+## Publications
 
-Please consider citing Tigon and Pasha if you find them useful:
+A paper describing Tigon can be found [here](https://yibo-huang.github.io/papers/tigon_osdi25.pdf). The Pasha paper can be found [here](https://yibo-huang.github.io/papers/pasha_cidr25.pdf). Please cite them as:
+
 ``` bibtex
 @inproceedings{tigon,
 author = {Yibo Huang and Haowei Chen and Newton Ni and Yan Sun and Vijay Chidambaram and Dixin Tang and Emmett Witchel},
-title = {Tigon: A Distributed Database for a CXL Pod},
+title = {Tigon: A Distributed Database for a {CXL} Pod},
 booktitle = {19th USENIX Symposium on Operating Systems Design and Implementation (OSDI 25)},
 year = {2025},
 address = {Boston, MA},
@@ -223,14 +226,15 @@ month = jul
 }
 
 @inproceedings{pasha,
-author={Huang, Yibo and Ni, Newton and Chidambaram, Vijay and Witchel, Emmett and Tang, Dixin},
-title={Pasha: An Efficient, Scalable Database Architecture for CXL Pods},
-booktitle={Proceedings of the Conference on Innovative Data Systems Research (CIDR)},
-year={2024},
+author = {Yibo Huang and Newton Ni and Vijay Chidambaram and Emmett Witchel and Dixin Tang},
+title = {Pasha: An Efficient, Scalable Database Architecture for {CXL} Pods},
+booktitle = {15th Conference on Innovative Data Systems Research, {CIDR} 2025, Amsterdam, The Netherlands, January 19-22, 2025},
+publisher = {www.cidrdb.org},
+year = {2025}
 }
 ```
 
-[^1]: Tigon: A Distributed Database for a CXL Pod, *To appear at OSDI '25*
+[^1]: Tigon: A Distributed Database for a CXL Pod, *OSDI '25*
 [^2]: Pasha: An Efficient, Scalable Database Architecture for CXL Pods, *CIDR '25*
 [^3]: Sundial: Harmonizing Concurrency Control and Caching in a Distributed OLTP Database Management System, *VLDB '18*
 [^4]: Lotus: scalable multi-partition transactions on single-threaded partitioned databases, *VLDB '22*
