@@ -12,7 +12,7 @@ def setup_cxl_host(cxl_host_dir: str, cxl_host_dir_size_mb: int, shmem_dir_numa:
     run_local_command(f"sudo mkdir -p {cxl_host_dir}".split())
     numa = ",".join(map(str, shmem_dir_numa))
     if os.path.ismount(cxl_host_dir):
-        run_local_command(f"sudo umount {cxl_host_dir}".split())
+        run_local_command(f"sudo umount -l {cxl_host_dir}".split())
     if not os.path.ismount(cxl_host_dir):
         run_local_command(f"sudo mount -t tmpfs -o size={cxl_host_dir_size_mb}M "
                           f"-o mpol=bind:{numa} -o rw,nosuid,nodev tmpfs {cxl_host_dir}".split())

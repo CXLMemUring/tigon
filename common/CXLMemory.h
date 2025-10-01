@@ -5,6 +5,7 @@
 #pragma once
 
 #include <atomic>
+#include <string>
 
 #include "core/Context.h"
 
@@ -52,11 +53,26 @@ class CXLMemory {
 
         void init_cxlalloc_for_given_thread(uint64_t threads_num_per_host, uint64_t thread_id, uint64_t hosts_num, uint64_t host_id)
         {
-                cxlalloc_init_backend("ivshmem");
-                cxlalloc_init("SS", default_cxl_mem_size, thread_id + threads_num_per_host * host_id, threads_num_per_host * hosts_num, host_id, hosts_num);
-                LOG(INFO) << "cxlalloc initialized for thread " << thread_id 
-                        << " (global ID = " << thread_id + threads_num_per_host * host_id 
-                        << ") on host " << host_id;
+                std::string backend = context.cxl_backend.empty() ? std::string("ivshmem") : context.cxl_backend;
+                std::string resource = context.cxl_memory_resource.empty() ? std::string("SS") : context.cxl_memory_resource;
+
+                std::string effective_backend = backend;
+                if (backend == "dax" || backend == "mmap") {
+                        CHECK(resource != "SS") << "Backend " << backend << " requires --cxl_memory_resource to point at a file or device";
+                        effective_backend = "mmap";
+                }
+
+                cxlalloc_init_backend(effective_backend.c_str());
+                cxlalloc_init(resource.c_str(), default_cxl_mem_size,
+                              thread_id + threads_num_per_host * host_id,
+                              threads_num_per_host * hosts_num,
+                              host_id,
+                              hosts_num);
+                LOG(INFO) << "cxlalloc initialized for thread " << thread_id
+                          << " (global ID = " << thread_id + threads_num_per_host * host_id
+                          << ") on host " << host_id
+                          << ": backend=" << backend
+                          << " resource=" << resource;
         }
 
         // backward compatibility

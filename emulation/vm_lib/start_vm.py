@@ -5,6 +5,7 @@ import errno
 import time
 import shutil
 import sys
+import textwrap
 from pathlib import Path
 from typing import List, Optional
 from dataclasses import dataclass, field
@@ -22,9 +23,12 @@ from ivshmem import setup_cxl_host, start_ivshmem, cleanup_ivshmem_setup
 from const import DEFAULT_DRIVE_PATH, DEFAULT_DRIVE_OVMF_PATH, DEFAULT_VM_DIR, LINUX_VM_BUILD_DIR, CONFIG_DIR
 from mtrr import remove_ivshmem_bar2_mtrr
 
+kCxlMemSimDefaultHost = "127.0.0.1"
+kCxlMemSimDefaultPort = 9999
+
 @dataclass
 class VMConfig:
-    qemu_bin: str = "/usr/bin/qemu-system-x86_64"
+    qemu_bin: str = "/usr/local/bin/qemu-system-x86_64"
     kernel: Optional[str] = None
     initrd: Optional[str] = None
     drive: str = DEFAULT_DRIVE_PATH
@@ -124,7 +128,7 @@ def construct_basic_qemu_cmd(args: argparse.Namespace, vm_id: int):
     numa_cpu = ",".join(map(str, args.vm_numa_node))
     gdb_port = 1234 + vm_id
     qemu_cmd = ["numactl", f"--cpunodebind={numa_cpu}", "--", f"{args.qemu_bin}", *trace,
-        "-machine", "q35,accel=kvm,mem-merge=off", "-cpu", cpu_model, "-D", f"./qemu_log{vm_id}.txt",
+        "-machine", "q35,accel=kvm,mem-merge=off,cxl=on", "-cpu", cpu_model, "-D", f"./qemu_log{vm_id}.txt",
         "-m", f"{args.mem_size_mb}M,maxmem={args.mem_size_mb}M", "--overcommit", "mem-lock=on",
         "--overcommit", "cpu-pm=on",
         "-smp", f"{args.num_cpus},maxcpus={args.num_cpus},sockets=1,cores={args.num_cpus}",
@@ -132,7 +136,6 @@ def construct_basic_qemu_cmd(args: argparse.Namespace, vm_id: int):
         "-device", "virtio-rng-pci",
         "-qmp", f"unix:{qemu_monitor_path},server,nowait",
         "-gdb", f"tcp::{gdb_port}", # for gdb debug
-        "-pidfile", f"{args.vmdir}/{vm_id}/pid",
     ]
     if args.use_ovmf:
         qemu_cmd += [
@@ -140,7 +143,7 @@ def construct_basic_qemu_cmd(args: argparse.Namespace, vm_id: int):
             "-drive", f"if=pflash,format=raw,file={args.vmdir}/{vm_id}/OVMF_VARS.fd"]
 
     if args.kernel and args.initrd:
-        qemu_cmd += ["-kernel", args.kernel, "-initrd", args.initrd,
+        qemu_cmd += ["-kernel","/root/CXLMemSim/workloads/tigon/emulation/image/bzImage",
                      "-append", "selinux=0 audit=0 console=ttyS0 root=/dev/vda2 ignore_loglevel rw"]
     return qemu_cmd
 
@@ -151,7 +154,7 @@ def construct_blk_cmd(qemu_cmd: List[str], numcpus: int, vmdrive_file: str):
     #     "-drive", f"if=none,file={vmdrive_file},format=raw,media=disk,id=drive0"]
     qemu_cmd += [
         "-device", f"virtio-blk-pci,packed=on,num-queues=1,drive=drive0,id=virblk0",
-        "-drive", f"if=none,file={vmdrive_file},format=raw,media=disk,id=drive0,cache=none,aio=native"]
+        "-drive", f"if=none,file={vmdrive_file},format=raw,media=disk,id=drive0,cache=none"]
 
 
 def construct_tap_net_cmd(qemu_cmd: List[str], vm_id: int):
@@ -218,11 +221,36 @@ def construct_shared_dir(qemu_cmd: List[str], shared_dir: str):
     ]
 
 
+def addCxlDevices(qemu_cmd: List[str]):
+    qemu_cmd += [
+        "-device",
+        "pxb-cxl,bus_nr=12,bus=pcie.0,id=cxl.1",
+        "-device",
+        "cxl-rp,port=0,bus=cxl.1,id=root_port13,chassis=0,slot=0",
+        "-device",
+        "cxl-rp,port=1,bus=cxl.1,id=root_port14,chassis=0,slot=1",
+        "-device",
+        (
+            "cxl-type3,bus=root_port13,persistent-memdev=cxl-mem1,lsa=cxl-lsa1,"
+            "id=cxl-pmem0,sn=0x1,"
+        ),
+        "-device",
+        (
+            "cxl-type1,bus=root_port14,size=256M,cache-size=64M,"
+        ),
+        "-device",
+        "virtio-cxl-accel-pci,bus=pcie.0",
+        "-object",
+        "memory-backend-file,id=cxl-mem1,share=on,mem-path=/tmp/cxltest.raw,size=128G",
+        "-object",
+        "memory-backend-file,id=cxl-lsa1,share=on,mem-path=/tmp/lsa.raw,size=256M",
+        "-M",
+        "cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=4G",
+    ]
+
+
 def construct_vnode_single(qemu_cmd: List[str], mem_size_mb: int):
-    qemu_cmd += ["-object", f"memory-backend-ram,id=mem0,size={mem_size_mb}M,prealloc=on,host-nodes=0,policy=bind,merge=off",
-        "-numa", "node,nodeid=0,memdev=mem0",
-        "-numa", "cpu,node-id=0,socket-id=0",
-        "-numa", "dist,src=0,dst=0,val=10"]
+    qemu_cmd += ["-object", f"memory-backend-ram,id=mem0,size={mem_size_mb}M,prealloc=on"]
 
 
 # vnodeid: 0 or 1
@@ -244,37 +272,63 @@ def construct_vnode(qemu_cmd: List[str], numcpus: int, vnodeid: int,
 
 
 def create_static_ip_addr_network_config(per_vmdir: str, ip_addr: str, network_card_id: int):
-    network_template_path = os.path.join(CONFIG_DIR, "20-wired-template.network")
-    with open(network_template_path, "r") as f:
-        network_template = f.read()
-    wired_20 = network_template.replace("@ADDR@", ip_addr)
-    wired_20 = wired_20.replace("@COUNT@", str(4+network_card_id))
-    wired_20_file = os.path.join(per_vmdir, f"{2+network_card_id}0-wired.network")
-    with open(wired_20_file, "w") as f:
-        f.write(wired_20)
-    return wired_20_file
+    iface_name = f"enp0s{4 + network_card_id}"
+    netplan_content = textwrap.dedent(
+        f"""\
+        network:
+          version: 2
+          renderer: networkd
+          ethernets:
+            {iface_name}:
+              dhcp4: false
+              addresses:
+                - {ip_addr}/24
+              gateway4: 192.168.100.1
+        """
+    )
+    netplan_file = os.path.join(per_vmdir, f"50-{iface_name}.yaml")
+    with open(netplan_file, "w") as f:
+        f.write(netplan_content)
+    return netplan_file
 
 
 def create_dhcp_network_config_for_userssh(per_vmdir: str, network_cards: int):
-    network_template_path = os.path.join(CONFIG_DIR, "30-wired-template.network")
-    with open(network_template_path, "r") as f:
-        network_template = f.read()
-    wired_30 = network_template.replace("@COUNT@", str(4+network_cards))
-    wired_30_file = os.path.join(per_vmdir, f"{2+network_cards}0-wired.network")
-    with open(wired_30_file, "w") as f:
-        f.write(wired_30)
-    return wired_30_file
+    iface_name = f"enp0s{4 + network_cards}"
+    netplan_content = textwrap.dedent(
+        f"""\
+        network:
+          version: 2
+          renderer: networkd
+          ethernets:
+            {iface_name}:
+              dhcp4: true
+        """
+    )
+    netplan_file = os.path.join(per_vmdir, f"50-{iface_name}.yaml")
+    with open(netplan_file, "w") as f:
+        f.write(netplan_content)
+    return netplan_file
 
 
 def create_static_ip_addr_ib_config(per_vmdir: str, ip_addr: str):
-    network_template_path = os.path.join(CONFIG_DIR, "40-wired-template.network")
-    with open(network_template_path, "r") as f:
-        network_template = f.read()
-    wired_40 = network_template.replace("@ADDR@", ip_addr)
-    wired_40_file = os.path.join(per_vmdir, "40-wired.network")
-    with open(wired_40_file, "w") as f:
-        f.write(wired_40)
-    return wired_40_file
+    iface_name = "ibp0s4"
+    netplan_content = textwrap.dedent(
+        f"""\
+        network:
+          version: 2
+          renderer: networkd
+          infiniband:
+            {iface_name}:
+              dhcp4: false
+              addresses:
+                - {ip_addr}/24
+              gateway4: 192.168.100.1
+        """
+    )
+    netplan_file = os.path.join(per_vmdir, f"50-{iface_name}.yaml")
+    with open(netplan_file, "w") as f:
+        f.write(netplan_content)
+    return netplan_file
 
 
 def create_etc_hosts(per_vmdir: str, ip_addr: str):
@@ -306,13 +360,12 @@ def prepare_vmdir(top_vmdir: str, drive: str, vm_id: int, drive_file_name: str,
                   num_vms: int = 1, host_id: int = 0):
     per_vmdir = os.path.join(top_vmdir, str(vm_id))
     os.makedirs(per_vmdir, exist_ok=True)
-    network_dir = os.path.join(per_vmdir, 'mnt', 'etc', 'systemd', 'network')
+    netplan_dir = os.path.join(per_vmdir, 'mnt', 'etc', 'netplan')
     etc_dir = os.path.join(per_vmdir, 'mnt', 'etc')
     mount_dir = os.path.join(per_vmdir, 'mnt')
     os.makedirs(mount_dir, exist_ok=True)
     vmdrive_file = os.path.join(per_vmdir, drive_file_name)
 
-    shutil.copy('/usr/share/OVMF/OVMF_VARS.fd', per_vmdir)
     per_vm_drive = os.path.join(per_vmdir, drive_file_name)
     if not os.path.exists(per_vm_drive):
         run_local_command(['dd', f'if={drive}', f'of={per_vm_drive}',
@@ -341,11 +394,11 @@ def prepare_vmdir(top_vmdir: str, drive: str, vm_id: int, drive_file_name: str,
 
     run_local_command(["sudo", "guestmount", "-a",
         vmdrive_file, "-i", mount_dir])
+    run_local_command(["sudo", "mkdir", "-p", netplan_dir])
     for f in network_files:
-        run_local_command(["sudo", "mv", f, network_dir])
+        run_local_command(["sudo", "mv", f, netplan_dir])
     run_local_command(["sudo", "mv", etchosts_file, etc_dir])
     run_local_command(["sudo", "cp", etcgai_path, etc_dir])
-    # run_local_command(["sudo", "cp", os.path.join(LINUX_VM_BUILD_DIR, '30-wired.network'), network_dir])
     run_local_command(["sudo", "umount", mount_dir])
     run_local_command(["sync"])
     time.sleep(3)
@@ -413,17 +466,16 @@ def start_vms(args: argparse.Namespace):
             num_ether_per_vm = args.num_ether_per_vm
         else:
             setup_bridge_tap_network(args.vmdir, int(args.num_vms))
-        shutil.copy('/usr/share/OVMF/OVMF_CODE.fd', args.vmdir)
         drive_file_name = os.path.basename(args.drive)
         num_vms = int(args.num_vms)
         if args.pass_gpu:
             pci_devs, kind = find_gpu()
         else:
             pci_devs, kind = [], GPUKind.NONE
-        if args.shmem_dir:
-            shmem_path = setup_shared_mem(args.vmdir, num_vms, args.shmem_dir, args.shmem_dir_numa,
-                            int(args.shmem_size_mb), args.msi_vectors,
-                            args.use_ivshmem_doorbell)
+        # if args.shmem_dir:
+        #     shmem_path = setup_shared_mem(args.vmdir, num_vms, args.shmem_dir, args.shmem_dir_numa,
+        #                     int(args.shmem_size_mb), args.msi_vectors,
+        #                     args.use_ivshmem_doorbell)
 
     vms = list(range(num_vms)) if args.restart_vm is None else [args.restart_vm]
 
@@ -446,9 +498,10 @@ def start_vms(args: argparse.Namespace):
             construct_tap_net_cmd(qemu_cmd, vm_id)
         if args.add_user_ssh:
             construct_user_net_cmd(qemu_cmd, vm_id)
-        if args.shmem_dir:
-            construct_shared_mem(qemu_cmd, vm_id, shmem_path, int(args.shmem_size_mb), args.msi_vectors,
-                                 args.use_ivshmem_doorbell)
+        # if args.shmem_dir:
+        #     construct_shared_mem(qemu_cmd, vm_id, shmem_path, int(args.shmem_size_mb), args.msi_vectors,
+        #                          args.use_ivshmem_doorbell)
+        addCxlDevices(qemu_cmd)
         if args.shared_dir:
             construct_shared_dir(qemu_cmd, args.shared_dir)
         if args.mem_local_percent == 100:
@@ -510,7 +563,7 @@ def main():
     subparsers = parser.add_subparsers()
 
     parser_start_vm = subparsers.add_parser('start_vm', help='start vm')
-    parser_start_vm.add_argument('--qemu_bin', default="qemu-system-x86_64", help="qemu binary to use")
+    parser_start_vm.add_argument('--qemu_bin', default="/usr/local/bin/qemu-system-x86_64", help="qemu binary to use")
     parser_start_vm.add_argument('--kernel', help="path to the kernel file")
     parser_start_vm.add_argument('--initrd', help="path to the initrd file")
     parser_start_vm.add_argument('--drive', default=DEFAULT_DRIVE_PATH, help="path to the VM drive")

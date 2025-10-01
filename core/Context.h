@@ -97,11 +97,13 @@ class Context {
 	bool hstore_active_active = false;
 	bool lotus_sp_parallel_exec_commit = false;
 
-        // CXL transport
+        // CXL transport / memory
         bool use_cxl_transport = false;
         bool use_output_thread = false;
         uint64_t cxl_trans_entry_struct_size = 8192;
         uint64_t cxl_trans_entry_num = 4096;
+        std::string cxl_backend = "mmap";
+        std::string cxl_memory_resource = "SS";
 
         // Pasha migration policy
         bool enable_migration_optimization = true;
