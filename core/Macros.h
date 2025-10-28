@@ -75,7 +75,8 @@ DEFINE_bool(use_cxl_transport, false, "use CXL transport instead of network tran
 DEFINE_bool(use_output_thread, false, "do you want an output thread?");
 DEFINE_uint64(cxl_trans_entry_struct_size, 8192, "size of enrty in a MPSC ringbuffer");
 DEFINE_uint64(cxl_trans_entry_num, 4096, "number of entries per MPSC ringbuffer");
-DEFINE_string(cxl_backend, "mmap", "cxlalloc backend (mmap, shm, ivshmem, dax)");
+// Default to ivshmem so shared-memory mode works out-of-the-box
+DEFINE_string(cxl_backend, "ivshmem", "cxlalloc backend (mmap, shm, ivshmem, dax)");
 DEFINE_string(cxl_memory_resource, "SS", "file or device path backing the CXL heap");
 
 DEFINE_bool(enable_migration_optimization, true, "enable data migration optimization");

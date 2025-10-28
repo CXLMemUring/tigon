@@ -38,7 +38,7 @@ class CXLMemory {
                 MISC_FREE
         };
 
-        static constexpr uint64_t default_cxl_mem_size = (((1024 * 1024 * 1024) + 64 * 1024) * (uint64_t)31);
+        static constexpr uint64_t default_cxl_mem_size = (64 * 1024 * 1024);  // 128MB
 
         static constexpr uint64_t cxl_transport_root_index = 0;
         static constexpr uint64_t cxl_data_migration_root_index = 1;

@@ -102,7 +102,8 @@ class Context {
         bool use_output_thread = false;
         uint64_t cxl_trans_entry_struct_size = 8192;
         uint64_t cxl_trans_entry_num = 4096;
-        std::string cxl_backend = "mmap";
+        // Default to ivshmem (shared memory) unless explicitly configured
+        std::string cxl_backend = "ivshmem";
         std::string cxl_memory_resource = "SS";
 
         // Pasha migration policy

@@ -237,7 +237,8 @@ class Database {
 				tbl_customer_vec.push_back(
 					std::make_unique<TableBTreeOLC<customer::key, customer::value, customer::KeyComparator, customer::ValueComparator, MetaInitFuncTwoPLPasha> >(customerTableID, partitionID));
                         } else if (context.protocol != "HStore") {
-				std::make_unique<TableBTreeOLC<customer::key, customer::value, customer::KeyComparator, customer::ValueComparator> >(customerTableID, partitionID);
+                        	tbl_customer_vec.push_back(
+                        		std::make_unique<TableBTreeOLC<customer::key, customer::value, customer::KeyComparator, customer::ValueComparator> >(customerTableID, partitionID));
 			} else {
 				if (context.lotus_checkpoint == COW_ON_CHECKPOINT_OFF_LOGGING_ON ||
 				    context.lotus_checkpoint == COW_ON_CHECKPOINT_ON_LOGGING_OFF ||

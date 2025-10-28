@@ -8,6 +8,47 @@ typeset current_date_time="`date +%Y%m%d%H%M`"
 
 source $SCRIPT_DIR/utilities.sh
 
+# ============================================================================
+# CXL Backend Configuration (DAX/mmap support)
+# ============================================================================
+# Default: use ivshmem (shared memory) mode - original tigon behavior
+# To use DAX/mmap mode, set environment variables BEFORE running:
+#   export CXL_BACKEND="dax"  # or "mmap"
+#   export CXL_MEMORY_RESOURCE="/dev/dax0.0"  # or file path
+# Or source the config script:
+#   source ./scripts/dax_config.sh
+# ============================================================================
+
+# Only set CXL backend flags if explicitly configured
+# If not set, tigon will use its internal default (ivshmem with "SS")
+if [ -n "${CXL_BACKEND:-}" ] && [ -n "${CXL_MEMORY_RESOURCE:-}" ]; then
+    # User explicitly configured both - use them
+    CXL_BACKEND_FLAGS="--cxl_backend=$CXL_BACKEND --cxl_memory_resource=$CXL_MEMORY_RESOURCE"
+elif [ -n "${CXL_BACKEND:-}" ]; then
+    # Only backend set - validate it makes sense
+    if [ "$CXL_BACKEND" = "dax" ] || [ "$CXL_BACKEND" = "mmap" ]; then
+        echo "WARNING: CXL_BACKEND=$CXL_BACKEND but CXL_MEMORY_RESOURCE not set"
+        echo "You must set CXL_MEMORY_RESOURCE to a file or device path"
+        echo "Example: export CXL_MEMORY_RESOURCE=/dev/dax0.0"
+        echo "Falling back to default (ivshmem mode)"
+        CXL_BACKEND_FLAGS=""
+    else
+        CXL_BACKEND_FLAGS="--cxl_backend=$CXL_BACKEND"
+    fi
+elif [ -n "${CXL_MEMORY_RESOURCE:-}" ]; then
+    # Only resource set - infer backend
+    if [ "$CXL_MEMORY_RESOURCE" != "SS" ]; then
+        # Assume mmap mode with the specified resource
+        CXL_BACKEND_FLAGS="--cxl_backend=mmap --cxl_memory_resource=$CXL_MEMORY_RESOURCE"
+    else
+        # SS means shared memory - don't set flags (use tigon defaults)
+        CXL_BACKEND_FLAGS=""
+    fi
+else
+    # Nothing configured - use tigon defaults (ivshmem mode)
+    CXL_BACKEND_FLAGS=""
+fi
+
 function print_usage {
         echo "[usage] ./run.sh [TPCC/YCSB/KILL/COMPILE/COMPILE_SYNC/CI/COLLECT_OUTPUTS] EXP-SPECIFIC"
         echo "TPCC: [SundialPasha/Sundial/TwoPLPasha/TwoPLPashaPhantom/TwoPL] HOST_NUM WORKER_NUM QUERY_TYPE REMOTE_NEWORDER_PERC REMOTE_PAYMENT_PERC USE_CXL_TRANS USE_OUTPUT_THREAD ENABLE_MIGRATION_OPTIMIZATION MIGRATION_POLICY WHEN_TO_MOVE_OUT HW_CC_BUDGET ENABLE_SCC SCC_MECH PRE_MIGRATE TIME_TO_RUN TIME_TO_WARMUP LOGGING_TYPE EPOCH_LEN MODEL_CXL_SEARCH GATHER_OUTPUTS"
@@ -79,16 +120,18 @@ function sync_binaries {
 function print_server_string {
         typeset HOST_NUM=$1
 
-        typeset base=2
+        # Use the same base as remote host configuration
+        # This matches REMOTE_START_SUFFIX in utilities.sh (default: 10)
+        typeset base=${REMOTE_START_SUFFIX:-10}
         typeset i=0
 
         for (( i=0; i < $HOST_NUM; ++i ))
         do
                 typeset ip=$(expr $base + $i)
                 if [ $i = 0 ]; then
-                        echo -n "192.168.100.$ip:1234"
+                        echo -n "${REMOTE_BASE_IP:-192.168.100}.$ip:1234"
                 else
-                        echo -n ";192.168.100.$ip:1234"
+                        echo -n ";${REMOTE_BASE_IP:-192.168.100}.$ip:1234"
                 fi
         done
 }
@@ -136,129 +179,129 @@ function run_exp_tpcc {
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=SundialPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=SundialPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=SundialPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
+                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=SundialPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
 
         elif [ $PROTOCOL = "Sundial" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --protocol=Sundial --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=Sundial --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --protocol=Sundial --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
+                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=Sundial --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
 
         elif [ $PROTOCOL = "TwoPLPasha" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=TwoPLPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=TwoPLPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
+                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
 
         elif [ $PROTOCOL = "TwoPLPashaPhantom" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=TwoPLPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=TwoPLPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
+                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
 
         elif [ $PROTOCOL = "TwoPL" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --protocol=TwoPL --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tpcc --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=TwoPL --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --protocol=TwoPL --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
+                ssh_command "cd pasha; ./bench_tpcc --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=TwoPL --query=$QUERY_TYPE --neworder_dist=$REMOTE_NEWORDER_PERC --payment_dist=$REMOTE_PAYMENT_PERC" 0
         else
                 echo "Protocol not supported!"
                 exit -1
@@ -316,129 +359,129 @@ function run_exp_ycsb {
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=SundialPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=SundialPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=SundialPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
+                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=SundialPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
 
         elif [ $PROTOCOL = "Sundial" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --protocol=Sundial --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=Sundial --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --protocol=Sundial --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
+                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=Sundial --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
 
         elif [ $PROTOCOL = "TwoPLPasha" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=TwoPLPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=TwoPLPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
+                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
 
         elif [ $PROTOCOL = "TwoPLPashaPhantom" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=TwoPLPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=TwoPLPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
+                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
 
         elif [ $PROTOCOL = "TwoPL" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --protocol=TwoPL --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_ycsb --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=TwoPL --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2 &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --protocol=TwoPL --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
+                ssh_command "cd pasha; ./bench_ycsb --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=TwoPL --query=$QUERY_TYPE --keys=$KEYS --read_write_ratio=$RW_RATIO --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO --cross_part_num=2" 0
         else
                 echo "Protocol not supported!"
                 exit -1
@@ -494,129 +537,129 @@ function run_exp_smallbank {
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=SundialPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=SundialPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=SundialPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=SundialPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
 
         elif [ $PROTOCOL = "Sundial" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --protocol=Sundial --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=Sundial --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --protocol=Sundial --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=Sundial --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
 
         elif [ $PROTOCOL = "TwoPLPasha" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
 
         elif [ $PROTOCOL = "TwoPLPashaPhantom" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
 
         elif [ $PROTOCOL = "TwoPL" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --protocol=TwoPL --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_smallbank --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=TwoPL --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --protocol=TwoPL --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_smallbank --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=TwoPL --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
         else
                 echo "Protocol not supported!"
                 exit -1
@@ -672,129 +715,129 @@ function run_exp_tatp {
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=SundialPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=SundialPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=SundialPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=SundialPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
 
         elif [ $PROTOCOL = "Sundial" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --protocol=Sundial --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=Sundial --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --protocol=Sundial --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=Sundial --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
 
         elif [ $PROTOCOL = "TwoPLPasha" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
 
         elif [ $PROTOCOL = "TwoPLPashaPhantom" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                                --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                                --pre_migrate=$PRE_MIGRATE
-                                --protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET
-                        --enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD
-                        --pre_migrate=$PRE_MIGRATE
-                        --protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--enable_migration_optimization=$ENABLE_MIGRATION_OPTIMIZATION --migration_policy=$MIGRATION_POLICY --when_to_move_out=$WHEN_TO_MOVE_OUT --hw_cc_budget=$HW_CC_BUDGET \
+--enable_scc=$ENABLE_SCC --scc_mechanism=$SCC_MECH --enable_phantom_detection=false --model_cxl_search_overhead=$MODEL_CXL_SEARCH_OVERHEAD \
+--pre_migrate=$PRE_MIGRATE \
+--protocol=TwoPLPasha --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
 
         elif [ $PROTOCOL = "TwoPL" ]; then
                 # launch 1-$HOST_NUM processes
                 for (( i=1; i < $HOST_NUM; ++i ))
                 do
-                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\"
-                                --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                                --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                                --partitioner=hash --hstore_command_logging=false
-                                --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                                --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                                --protocol=TwoPL --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
+                        ssh_command "cd pasha; nohup ./bench_tatp --logtostderr=1 --id=$i --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=TwoPL --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO &> output.txt < /dev/null &" $i
                 done
 
                 # launch the first process
-                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\"
-                        --threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000
-                        --log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE
-                        --partitioner=hash --hstore_command_logging=false
-                        --replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP
-                        --use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM
-                        --protocol=TwoPL --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
+                ssh_command "cd pasha; ./bench_tatp --logtostderr=1 --id=0 --servers=\"$SERVER_STRING\" \
+--threads=$WORKER_NUM --partition_num=$PARTITION_NUM --granule_count=2000 \
+--log_path=$LOG_PATH --lotus_checkpoint=$LOTUS_CHECKPOINT --persist_latency=0 --wal_group_commit_time=$WAL_GROUP_COMMIT_TIME --wal_group_commit_size=$WAL_GROUP_COMMIT_BATCH_SIZE \
+--partitioner=hash --hstore_command_logging=false \
+--replica_group=1 --lock_manager=0 --batch_flush=1 --lotus_async_repl=true --batch_size=0 --time_to_run=$TIME_TO_RUN --time_to_warmup=$TIME_TO_WARMUP \
+--use_cxl_transport=$USE_CXL_TRANS --use_output_thread=$USE_OUTPUT_THREAD --cxl_trans_entry_struct_size=$CXL_TRANS_ENTRY_STRUCT_SIZE --cxl_trans_entry_num=$CXL_TRANS_ENTRY_NUM $CXL_BACKEND_FLAGS \
+--protocol=TwoPL --keys=$KEYS --zipf=$ZIPF_THETA --cross_ratio=$CROSS_RATIO" 0
         else
                 echo "Protocol not supported!"
                 exit -1

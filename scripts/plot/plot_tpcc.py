@@ -17,16 +17,13 @@ if len(sys.argv) != 2:
 res_root_dir = sys.argv[1]
 
 DEFAULT_PLOT = {
-    "markersize": 12.0,
-    "markeredgewidth": 2.6,
+    "markersize": 10.0,
+    "markeredgewidth": 2.4,
     "markevery": 1,
-    "linewidth": 2.6,
+    "linewidth": 2.4,
 }
 
-plt.rcParams["font.size"] = 14
-
-# Configure grid
-plt.grid(axis='y')
+plt.rcParams["font.size"] = 13
 
 ### plot TPCC ###
 res_csv = res_root_dir + "/tpcc/tpcc.csv"
@@ -41,34 +38,48 @@ tigon_y = res_df["Tigon"]
 sundial_cxl_improved_y = res_df["Sundial-CXL-improved"]
 twopl_cxl_improved_y = res_df["TwoPL-CXL-improved"]
 motor_y = res_df["Motor"]
+sundial_net_y = res_df["Sundial-NET"]
+twopl_net_y = res_df["TwoPL-NET"]
+tigon_net_y = res_df["Tigon-NET"]
 
-plt.xlabel("Multi-partition Transaction Percentage")
-plt.ylabel("Throughput (txns/sec)")
+# Create figure with two subplots
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 4.5))
 
-# Configure axis range
-tmp_list = list()
-tmp_list.extend(tigon_y)
-tmp_list.extend(sundial_cxl_improved_y)
-tmp_list.extend(twopl_cxl_improved_y)
-tmp_list.extend(motor_y)
+### LEFT PANEL: Without CXL (Network-based) ###
+ax1.grid(axis='y', alpha=0.3, linestyle='--')
+ax1.set_xlabel("Multi-partition Transaction Percentage (%)")
+ax1.set_ylabel("Throughput (txns/sec)")
+ax1.set_title("(a) Without CXL (Network-based)", fontweight='bold', fontsize=14)
 
-max_y = max(tmp_list)
-max_y_rounded_up = math.ceil(max_y / 200000.0) * 200000.0
-plt.ylim(0, max_y_rounded_up)
+# Plot without CXL
+ax1.plot(x, sundial_net_y, color="#4372c4", marker="^", **DEFAULT_PLOT, markerfacecolor="none", label="Sundial")
+ax1.plot(x, twopl_net_y, color="#ffc003", marker=">", **DEFAULT_PLOT, markerfacecolor="none", label="DS2PL")
+ax1.plot(x, tigon_net_y, color="#000000", marker="s", **DEFAULT_PLOT, label="Tigon")
+ax1.plot(x, motor_y, color="#ed7d31", marker="o", **DEFAULT_PLOT, markerfacecolor="none", label="Motor")
 
-# Transform Y axises
-ax = plt.subplot(111)
-plt.ylim(0, 800000)
-ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:,.0f}'.format(x/1000) + 'K' if x != 0 else 0))
+ax1.set_ylim(0, 800000)
+ax1.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:,.0f}'.format(x/1000) + 'K' if x != 0 else '0'))
 
-# Create the line plot
-plt.plot(x, tigon_y, color="#000000", marker="s", **DEFAULT_PLOT, label="Tigon")
-plt.plot(x, sundial_cxl_improved_y, color="#4372c4", marker="^", **DEFAULT_PLOT, markerfacecolor="none", label="Sundial+")
-plt.plot(x, twopl_cxl_improved_y, color="#ffc003", marker=">", **DEFAULT_PLOT, markerfacecolor="none", label="DS2PL+")
-plt.plot(x, motor_y, color="#ed7d31", marker="o", **DEFAULT_PLOT, markerfacecolor="none", label="Motor")
+legend1 = ax1.legend(loc='upper right', frameon=True, fancybox=False, framealpha=1, edgecolor='black', fontsize=12)
+legend1.get_frame().set_linewidth(0.7)
 
-# Configure legend
-legend = ax.legend(loc='upper right', bbox_to_anchor=(1.019, 1.026), columnspacing=1, frameon=True, fancybox=False, framealpha=1, ncol=2, edgecolor='black')
-legend.get_frame().set_linewidth(0.7)
+### RIGHT PANEL: With CXL ###
+ax2.grid(axis='y', alpha=0.3, linestyle='--')
+ax2.set_xlabel("Multi-partition Transaction Percentage (%)")
+ax2.set_ylabel("Throughput (txns/sec)")
+ax2.set_title("(b) With CXL Memory", fontweight='bold', fontsize=14)
 
+# Plot with CXL
+ax2.plot(x, tigon_y, color="#000000", marker="s", **DEFAULT_PLOT, label="Tigon")
+ax2.plot(x, sundial_cxl_improved_y, color="#4372c4", marker="^", **DEFAULT_PLOT, markerfacecolor="none", label="Sundial+")
+ax2.plot(x, twopl_cxl_improved_y, color="#ffc003", marker=">", **DEFAULT_PLOT, markerfacecolor="none", label="DS2PL+")
+ax2.plot(x, motor_y, color="#ed7d31", marker="o", **DEFAULT_PLOT, markerfacecolor="none", label="Motor")
+
+ax2.set_ylim(0, 800000)
+ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:,.0f}'.format(x/1000) + 'K' if x != 0 else '0'))
+
+legend2 = ax2.legend(loc='upper right', frameon=True, fancybox=False, framealpha=1, edgecolor='black', fontsize=12)
+legend2.get_frame().set_linewidth(0.7)
+
+plt.tight_layout()
 plt.savefig(res_root_dir + "/tpcc/tpcc.pdf", format="pdf", bbox_inches="tight")
