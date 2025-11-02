@@ -424,11 +424,26 @@ class Coordinator {
                                 << cxl_ringbuffers[0].get_entry_size() << " Bytes)";
                 } else {
                         CXLMemory::wait_and_retrieve_cxl_shared_data(CXLMemory::cxl_transport_root_index, &tmp);
-                        cxl_ringbuffers = reinterpret_cast<MPSCRingBuffer *>(tmp);
-                        cxl_transport = new CXLTransport(cxl_ringbuffers);
-                        LOG(INFO) << "Coordinator " << id << " retrives CXL transport metadata ("
-                                << coordinator_num << " ringbuffers each with " << cxl_ringbuffers[0].get_entry_num() << " entries (each "
-                                << cxl_ringbuffers[0].get_entry_size() << " Bytes)";
+
+                        if (tmp == NULL) {
+                                // Shared memory not available - allocate local ring buffers
+                                LOG(WARNING) << "CXL shared memory not available. Coordinator " << id << " will allocate local CXL ring buffers.";
+                                LOG(WARNING) << "Cross-node CXL transport will not work. Using TCP transport for cross-node communication.";
+                                cxl_ringbuffers = reinterpret_cast<MPSCRingBuffer *>(cxl_memory.cxlalloc_malloc_wrapper(sizeof(MPSCRingBuffer) * coordinator_num,
+                                        CXLMemory::TRANSPORT_ALLOCATION));
+                                for (i = 0; i < coordinator_num; i++)
+                                        new(&cxl_ringbuffers[i]) MPSCRingBuffer(context.cxl_trans_entry_struct_size, context.cxl_trans_entry_num);
+                                cxl_transport = new CXLTransport(cxl_ringbuffers);
+                                LOG(INFO) << "Coordinator " << id << " initialized local CXL transport metadata ("
+                                        << coordinator_num << " ringbuffers each with " << cxl_ringbuffers[0].get_entry_num() << " entries (each "
+                                        << cxl_ringbuffers[0].get_entry_size() << " Bytes)";
+                        } else {
+                                cxl_ringbuffers = reinterpret_cast<MPSCRingBuffer *>(tmp);
+                                cxl_transport = new CXLTransport(cxl_ringbuffers);
+                                LOG(INFO) << "Coordinator " << id << " retrives CXL transport metadata ("
+                                        << coordinator_num << " ringbuffers each with " << cxl_ringbuffers[0].get_entry_num() << " entries (each "
+                                        << cxl_ringbuffers[0].get_entry_size() << " Bytes)";
+                        }
                 }
         }
 
@@ -444,8 +459,17 @@ class Coordinator {
                         LOG(INFO) << "created global CXL EBR metadata";
                 } else {
                         CXLMemory::wait_and_retrieve_cxl_shared_data(CXLMemory::cxl_global_ebr_meta_root_index, &tmp);
-                        global_ebr_meta = reinterpret_cast<CXL_EBR *>(tmp);
-                        LOG(INFO) << "retrieved global CXL EBR metadata";
+
+                        if (tmp == NULL) {
+                                // Shared memory not available - allocate local EBR
+                                LOG(WARNING) << "CXL shared memory not available. Coordinator " << id << " will allocate local CXL EBR metadata.";
+                                global_ebr_meta = reinterpret_cast<CXL_EBR *>(cxl_memory.cxlalloc_malloc_wrapper(sizeof(CXL_EBR), CXLMemory::MISC_ALLOCATION));
+                                new(global_ebr_meta) CXL_EBR(context.coordinator_num, context.worker_num);
+                                LOG(INFO) << "created local CXL EBR metadata";
+                        } else {
+                                global_ebr_meta = reinterpret_cast<CXL_EBR *>(tmp);
+                                LOG(INFO) << "retrieved global CXL EBR metadata";
+                        }
                 }
         }
 

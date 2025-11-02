@@ -202,18 +202,50 @@ class CXLMemory {
         static void commit_shared_data_initialization(uint64_t root_index, void *shared_data)
         {
                 cxlalloc_set_root(root_index, shared_data);
+
+                // NEW: Also convert pointer to offset for network sharing
+                uint64_t offset = 0;
+                if (cxlalloc_pointer_to_offset(shared_data, &offset)) {
+                        // Store offset in root for non-shared-memory scenarios
+                        cxlalloc_set_root(root_index + 1000, (void*)offset);
+                        LOG(INFO) << "CXL: Stored offset " << offset << " for root_index " << root_index;
+                }
         }
 
         static void wait_and_retrieve_cxl_shared_data(uint64_t root_index, void **shared_data)
         {
                 void *addr = NULL;
-                while (true) {
+                int retry_count = 0;
+                const int MAX_RETRIES = 100;  // Try for ~10 seconds
+
+                while (retry_count < MAX_RETRIES) {
                         addr = cxlalloc_get_root(root_index);
-                        if (addr)
-                                break;
+                        if (addr) {
+                                *shared_data = addr;
+                                return;
+                        }
+
+                        // NEW: Try to get offset instead
+                        uint64_t offset = (uint64_t)cxlalloc_get_root(root_index + 1000);
+                        if (offset != 0) {
+                                // Convert offset to local pointer
+                                addr = cxlalloc_offset_to_pointer(offset);
+                                if (addr) {
+                                        LOG(INFO) << "CXL: Retrieved data via offset " << offset << " for root_index " << root_index;
+                                        *shared_data = addr;
+                                        // Store in regular root for future access
+                                        cxlalloc_set_root(root_index, addr);
+                                        return;
+                                }
+                        }
+
+                        usleep(100000);  // 100ms
+                        retry_count++;
                 }
 
-                *shared_data = addr;
+                LOG(ERROR) << "CXL: Failed to retrieve shared data for root_index " << root_index << " after " << MAX_RETRIES << " retries";
+                LOG(ERROR) << "CXL: This suggests memory is not shared between nodes. Each node is using independent CXL memory.";
+                *shared_data = NULL;
         }
 
         uint64_t get_stats(int category)

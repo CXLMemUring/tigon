@@ -1036,87 +1036,101 @@ class Database {
                         // other hosts wait and retrieve the CXL tables
                         void *tmp = NULL;
                         CXLMemory::wait_and_retrieve_cxl_shared_data(CXLMemory::cxl_data_migration_root_index, &tmp);
-                        boost::interprocess::offset_ptr<void> *cxl_table_ptrs = reinterpret_cast<boost::interprocess::offset_ptr<void> *>(tmp);
 
-                        // auto warehouseTableID = warehouse::tableID;
-                        // cxl_tbl_vecs[warehouseTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         CCHashTable *cxl_table = reinterpret_cast<CCHashTable *>(cxl_table_ptrs[warehouseTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[warehouseTableID][i] = new CXLTableHashMap<warehouse::key>(cxl_table, warehouseTableID, i);
-                        // }
+                        if (tmp == NULL) {
+                                // CXL shared memory not available - skip CXL table setup
+                                LOG(WARNING) << "TPCC: CXL shared memory not available. Skipping CXL table initialization.";
+                                LOG(WARNING) << "TPCC: Data migration will not work without shared CXL tables.";
+                                // Initialize empty table vectors
+                                for (int tbl_id = 0; tbl_id < table_num_per_partition; tbl_id++) {
+                                        cxl_tbl_vecs[tbl_id].resize(partitionNum);
+                                        for (int i = 0; i < partitionNum; i++) {
+                                                cxl_tbl_vecs[tbl_id][i] = nullptr;
+                                        }
+                                }
+                        } else {
+                                boost::interprocess::offset_ptr<void> *cxl_table_ptrs = reinterpret_cast<boost::interprocess::offset_ptr<void> *>(tmp);
 
-                        // auto districtTableID = district::tableID;
-                        // cxl_tbl_vecs[districtTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         CCHashTable *cxl_table = reinterpret_cast<CCHashTable *>(cxl_table_ptrs[districtTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[districtTableID][i] = new CXLTableHashMap<district::key>(cxl_table, districtTableID, i);
-                        // }
+                                // auto warehouseTableID = warehouse::tableID;
+                                // cxl_tbl_vecs[warehouseTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         CCHashTable *cxl_table = reinterpret_cast<CCHashTable *>(cxl_table_ptrs[warehouseTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[warehouseTableID][i] = new CXLTableHashMap<warehouse::key>(cxl_table, warehouseTableID, i);
+                                // }
 
-                        auto customerTableID = customer::tableID;
-                        cxl_tbl_vecs[customerTableID].resize(partitionNum);
-                        for (int i = 0; i < partitionNum; i++) {
-                                auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<customer::key, customer::KeyComparator>::CXLBTree *>(cxl_table_ptrs[customerTableID * partitionNum + i].get());
-                                cxl_tbl_vecs[customerTableID][i] = new CXLTableBTreeOLC<customer::key, customer::KeyComparator>(cxl_table, customerTableID, i);
+                                // auto districtTableID = district::tableID;
+                                // cxl_tbl_vecs[districtTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         CCHashTable *cxl_table = reinterpret_cast<CCHashTable *>(cxl_table_ptrs[districtTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[districtTableID][i] = new CXLTableHashMap<district::key>(cxl_table, districtTableID, i);
+                                // }
+
+                                auto customerTableID = customer::tableID;
+                                cxl_tbl_vecs[customerTableID].resize(partitionNum);
+                                for (int i = 0; i < partitionNum; i++) {
+                                        auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<customer::key, customer::KeyComparator>::CXLBTree *>(cxl_table_ptrs[customerTableID * partitionNum + i].get());
+                                        cxl_tbl_vecs[customerTableID][i] = new CXLTableBTreeOLC<customer::key, customer::KeyComparator>(cxl_table, customerTableID, i);
+                                }
+
+                                // auto customerNameIdxTableID = customer_name_idx::tableID;
+                                // cxl_tbl_vecs[customerNameIdxTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         CCHashTable *cxl_table = reinterpret_cast<CCHashTable *>(cxl_table_ptrs[customerNameIdxTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[customerNameIdxTableID][i] = new CXLTableHashMap<customer_name_idx::key>(cxl_table, customerNameIdxTableID, i);
+                                // }
+
+                                // auto historyTableID = history::tableID;
+                                // cxl_tbl_vecs[historyTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<history::key, history::KeyComparator>::CXLBTree *>(cxl_table_ptrs[historyTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[historyTableID][i] = new CXLTableBTreeOLC<history::key, history::KeyComparator>(cxl_table, historyTableID, i);
+                                // }
+
+                                // auto newOrderTableID = new_order::tableID;
+                                // cxl_tbl_vecs[newOrderTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<new_order::key, new_order::KeyComparator>::CXLBTree *>(cxl_table_ptrs[newOrderTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[newOrderTableID][i] = new CXLTableBTreeOLC<new_order::key, new_order::KeyComparator>(cxl_table, newOrderTableID, i);
+                                // }
+
+                                // auto orderTableID = order::tableID;
+                                // cxl_tbl_vecs[orderTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<order::key, order::KeyComparator>::CXLBTree *>(cxl_table_ptrs[orderTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[orderTableID][i] = new CXLTableBTreeOLC<order::key, order::KeyComparator>(cxl_table, orderTableID, i);
+                                // }
+
+
+                                // auto orderCustTableID = order_customer::tableID;
+                                // cxl_tbl_vecs[orderCustTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<order_customer::key, order_customer::KeyComparator>::CXLBTree *>(cxl_table_ptrs[orderCustTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[orderCustTableID][i] = new CXLTableBTreeOLC<order_customer::key, order_customer::KeyComparator>(cxl_table, orderCustTableID, i);
+                                // }
+
+                                // auto orderLineTableID = order_line::tableID;
+                                // cxl_tbl_vecs[orderLineTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<order_line::key, order_line::KeyComparator>::CXLBTree *>(cxl_table_ptrs[orderLineTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[orderLineTableID][i] = new CXLTableBTreeOLC<order_line::key, order_line::KeyComparator>(cxl_table, orderLineTableID, i);
+                                // }
+
+                                // auto itemTableID = item::tableID;
+                                // cxl_tbl_vecs[itemTableID].resize(partitionNum);
+                                // for (int i = 0; i < partitionNum; i++) {
+                                //         CCHashTable *cxl_table = reinterpret_cast<CCHashTable *>(cxl_table_ptrs[itemTableID * partitionNum + i].get());
+                                //         cxl_tbl_vecs[itemTableID][i] = new CXLTableHashMap<item::key>(cxl_table, itemTableID, i);
+                                // }
+
+                                auto stockTableID = stock::tableID;
+                                cxl_tbl_vecs[stockTableID].resize(partitionNum);
+                                for (int i = 0; i < partitionNum; i++) {
+                                        auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<stock::key, stock::KeyComparator>::CXLBTree *>(cxl_table_ptrs[stockTableID * partitionNum + i].get());
+                                        cxl_tbl_vecs[stockTableID][i] = new CXLTableBTreeOLC<stock::key, stock::KeyComparator>(cxl_table, stockTableID, i);
+                                }
+
+                                LOG(INFO) << "TPCC retrieves data migration metadata";
                         }
-
-                        // auto customerNameIdxTableID = customer_name_idx::tableID;
-                        // cxl_tbl_vecs[customerNameIdxTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         CCHashTable *cxl_table = reinterpret_cast<CCHashTable *>(cxl_table_ptrs[customerNameIdxTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[customerNameIdxTableID][i] = new CXLTableHashMap<customer_name_idx::key>(cxl_table, customerNameIdxTableID, i);
-                        // }
-
-                        // auto historyTableID = history::tableID;
-                        // cxl_tbl_vecs[historyTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<history::key, history::KeyComparator>::CXLBTree *>(cxl_table_ptrs[historyTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[historyTableID][i] = new CXLTableBTreeOLC<history::key, history::KeyComparator>(cxl_table, historyTableID, i);
-                        // }
-
-                        // auto newOrderTableID = new_order::tableID;
-                        // cxl_tbl_vecs[newOrderTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<new_order::key, new_order::KeyComparator>::CXLBTree *>(cxl_table_ptrs[newOrderTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[newOrderTableID][i] = new CXLTableBTreeOLC<new_order::key, new_order::KeyComparator>(cxl_table, newOrderTableID, i);
-                        // }
-
-                        // auto orderTableID = order::tableID;
-                        // cxl_tbl_vecs[orderTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<order::key, order::KeyComparator>::CXLBTree *>(cxl_table_ptrs[orderTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[orderTableID][i] = new CXLTableBTreeOLC<order::key, order::KeyComparator>(cxl_table, orderTableID, i);
-                        // }
-
-
-                        // auto orderCustTableID = order_customer::tableID;
-                        // cxl_tbl_vecs[orderCustTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<order_customer::key, order_customer::KeyComparator>::CXLBTree *>(cxl_table_ptrs[orderCustTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[orderCustTableID][i] = new CXLTableBTreeOLC<order_customer::key, order_customer::KeyComparator>(cxl_table, orderCustTableID, i);
-                        // }
-
-                        // auto orderLineTableID = order_line::tableID;
-                        // cxl_tbl_vecs[orderLineTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<order_line::key, order_line::KeyComparator>::CXLBTree *>(cxl_table_ptrs[orderLineTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[orderLineTableID][i] = new CXLTableBTreeOLC<order_line::key, order_line::KeyComparator>(cxl_table, orderLineTableID, i);
-                        // }
-
-                        // auto itemTableID = item::tableID;
-                        // cxl_tbl_vecs[itemTableID].resize(partitionNum);
-                        // for (int i = 0; i < partitionNum; i++) {
-                        //         CCHashTable *cxl_table = reinterpret_cast<CCHashTable *>(cxl_table_ptrs[itemTableID * partitionNum + i].get());
-                        //         cxl_tbl_vecs[itemTableID][i] = new CXLTableHashMap<item::key>(cxl_table, itemTableID, i);
-                        // }
-
-                        auto stockTableID = stock::tableID;
-                        cxl_tbl_vecs[stockTableID].resize(partitionNum);
-                        for (int i = 0; i < partitionNum; i++) {
-                                auto cxl_table = reinterpret_cast<CXLTableBTreeOLC<stock::key, stock::KeyComparator>::CXLBTree *>(cxl_table_ptrs[stockTableID * partitionNum + i].get());
-                                cxl_tbl_vecs[stockTableID][i] = new CXLTableBTreeOLC<stock::key, stock::KeyComparator>(cxl_table, stockTableID, i);
-                        }
-
-                        LOG(INFO) << "TPCC retrieves data migration metadata";
                 }
 
                 return cxl_tbl_vecs;
