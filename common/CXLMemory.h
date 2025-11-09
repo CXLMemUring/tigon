@@ -6,6 +6,10 @@
 
 #include <atomic>
 #include <string>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/file.h>
 
 #include "core/Context.h"
 
@@ -46,6 +50,23 @@ class CXLMemory {
         static constexpr uint64_t cxl_global_epoch_root_index = 3;
         static constexpr uint64_t cxl_global_ebr_meta_root_index = 4;
 
+        // File system synchronization support
+        static int sync_fd;
+        static std::string sync_file_path;
+        static bool use_file_sync;
+
+        // Direct file-based metadata storage (bypassing cxlalloc's root table)
+        // Store offsets at the beginning of the file (first 4KB reserved for metadata)
+        static constexpr size_t METADATA_REGION_SIZE = 4096;
+        static constexpr size_t MAX_ROOT_ENTRIES = 512;  // 4096 / 8 = 512 uint64_t entries
+        static constexpr off_t METADATA_FILE_OFFSET = 0;  // Metadata at start of file
+
+        // mmap-based shared metadata for device files (/dev/pmem0)
+        // This region is mmapped separately from cxlalloc's heap
+        static void* metadata_mmap_base;
+        static int metadata_fd;
+        static bool use_mmap_metadata;
+
         void init(Context context)
         {
                 this->context = context;
@@ -60,6 +81,73 @@ class CXLMemory {
                 if (backend == "dax" || backend == "mmap") {
                         CHECK(resource != "SS") << "Backend " << backend << " requires --cxl_memory_resource to point at a file or device";
                         effective_backend = "mmap";
+
+                        // Enable file synchronization ONLY for mmap backend with regular files (not device files)
+                        // Device files (/dev/dax*, /dev/pmem*) don't support pwrite/pread operations
+                        bool is_device_file = (resource.find("/dev/dax") == 0) || (resource.find("/dev/pmem") == 0);
+                        bool is_shared_file = (backend == "mmap" && !is_device_file);
+
+                        if (hosts_num > 1 && thread_id == 0 && is_shared_file) {  // Only for shared regular files
+                                use_file_sync = true;
+                                sync_file_path = resource;
+
+                                // Open file for direct metadata access (don't mmap - cxlalloc will do that)
+                                sync_fd = open(resource.c_str(), O_RDWR | O_SYNC);
+                                if (sync_fd < 0) {
+                                        LOG(ERROR) << "Failed to open " << resource << " for file sync: " << strerror(errno);
+                                        use_file_sync = false;
+                                } else {
+                                        // Initialize metadata region to zero on first node only
+                                        if (host_id == 0) {
+                                                uint64_t zeros[MAX_ROOT_ENTRIES] = {0};
+                                                ssize_t written = pwrite(sync_fd, zeros, METADATA_REGION_SIZE, METADATA_FILE_OFFSET);
+                                                if (written != METADATA_REGION_SIZE) {
+                                                        LOG(ERROR) << "Failed to initialize metadata region: " << strerror(errno);
+                                                        use_file_sync = false;
+                                                } else {
+                                                        fsync(sync_fd);
+                                                        LOG(INFO) << "File synchronization enabled: initialized " << METADATA_REGION_SIZE << " bytes metadata region";
+                                                }
+                                        } else {
+                                                LOG(INFO) << "File synchronization enabled for multi-node mmap backend";
+                                        }
+                                }
+                        }
+
+                        // For device files (/dev/pmem0), use mmap-based metadata sharing
+                        if (hosts_num > 1 && thread_id == 0 && is_device_file) {
+                                use_mmap_metadata = true;
+
+                                // Open device for metadata mmap (separate from cxlalloc's mmap)
+                                metadata_fd = open(resource.c_str(), O_RDWR);
+                                if (metadata_fd < 0) {
+                                        LOG(ERROR) << "Failed to open " << resource << " for mmap metadata: " << strerror(errno);
+                                        use_mmap_metadata = false;
+                                } else {
+                                        // mmap first 4KB as shared metadata region
+                                        metadata_mmap_base = mmap(NULL, METADATA_REGION_SIZE,
+                                                                  PROT_READ | PROT_WRITE,
+                                                                  MAP_SHARED, metadata_fd, 0);
+
+                                        if (metadata_mmap_base == MAP_FAILED) {
+                                                LOG(ERROR) << "Failed to mmap metadata region: " << strerror(errno);
+                                                use_mmap_metadata = false;
+                                                close(metadata_fd);
+                                                metadata_fd = -1;
+                                        } else {
+                                                // Initialize metadata region to zero on first node only
+                                                if (host_id == 0) {
+                                                        memset(metadata_mmap_base, 0, METADATA_REGION_SIZE);
+                                                        msync(metadata_mmap_base, METADATA_REGION_SIZE, MS_SYNC);
+                                                        LOG(INFO) << "Shared metadata region initialized at " << metadata_mmap_base
+                                                                  << " (" << METADATA_REGION_SIZE << " bytes)";
+                                                } else {
+                                                        LOG(INFO) << "Shared metadata region mapped at " << metadata_mmap_base
+                                                                  << " (" << METADATA_REGION_SIZE << " bytes)";
+                                                }
+                                        }
+                                }
+                        }
                 }
 
                 cxlalloc_init_backend(effective_backend.c_str());
@@ -72,7 +160,8 @@ class CXLMemory {
                           << " (global ID = " << thread_id + threads_num_per_host * host_id
                           << ") on host " << host_id
                           << ": backend=" << backend
-                          << " resource=" << resource;
+                          << " resource=" << resource
+                          << " file_sync=" << (use_file_sync ? "enabled" : "disabled");
         }
 
         // backward compatibility
@@ -199,16 +288,66 @@ class CXLMemory {
                 }
         }
 
+        // Synchronize memory to file system
+        static void sync_to_filesystem()
+        {
+                if (!use_file_sync || sync_fd < 0) {
+                        return;
+                }
+
+                // Force sync to disk
+                fsync(sync_fd);
+
+                // Invalidate page cache to ensure other processes see updates
+                // Use posix_fadvise to hint kernel to drop cache
+                posix_fadvise(sync_fd, 0, 0, POSIX_FADV_DONTNEED);
+
+                LOG(INFO) << "CXL: Synced shared memory to filesystem";
+        }
+
         static void commit_shared_data_initialization(uint64_t root_index, void *shared_data)
         {
                 cxlalloc_set_root(root_index, shared_data);
 
-                // NEW: Also convert pointer to offset for network sharing
+                // Convert pointer to offset for sharing
                 uint64_t offset = 0;
                 if (cxlalloc_pointer_to_offset(shared_data, &offset)) {
-                        // Store offset in root for non-shared-memory scenarios
+                        // Store offset in cxlalloc's root table for single-process scenario
                         cxlalloc_set_root(root_index + 1000, (void*)offset);
-                        LOG(INFO) << "CXL: Stored offset " << offset << " for root_index " << root_index;
+
+                        // NEW: For multi-process sharing via mmap metadata (device files)
+                        if (use_mmap_metadata && metadata_mmap_base != nullptr) {
+                                CHECK(root_index < MAX_ROOT_ENTRIES) << "root_index " << root_index << " exceeds MAX_ROOT_ENTRIES";
+
+                                // Write offset directly to shared mmap region
+                                uint64_t* metadata = (uint64_t*)metadata_mmap_base;
+                                metadata[root_index] = offset;
+
+                                // Ensure visibility (memory barrier + cache flush)
+                                __sync_synchronize();
+                                msync(&metadata[root_index], sizeof(uint64_t), MS_SYNC);
+
+                                LOG(INFO) << "CXL: Wrote offset " << offset << " to shared metadata[" << root_index << "]";
+                        }
+                        // For multi-process file sharing (regular files), write offset via pwrite
+                        else if (use_file_sync && sync_fd >= 0) {
+                                CHECK(root_index < MAX_ROOT_ENTRIES) << "root_index " << root_index << " exceeds MAX_ROOT_ENTRIES";
+
+                                // Write offset to file at metadata region
+                                off_t file_offset = METADATA_FILE_OFFSET + (root_index * sizeof(uint64_t));
+                                ssize_t written = pwrite(sync_fd, &offset, sizeof(uint64_t), file_offset);
+
+                                if (written == sizeof(uint64_t)) {
+                                        // Force sync to disk for 9p filesystem
+                                        fdatasync(sync_fd);  // Faster than fsync, just syncs data
+                                        __sync_synchronize();  // Memory barrier
+                                        LOG(INFO) << "CXL: Stored offset " << offset << " for root_index " << root_index << " in file metadata (offset " << file_offset << ")";
+                                } else {
+                                        LOG(ERROR) << "CXL: Failed to write offset to file: " << strerror(errno);
+                                }
+                        } else {
+                                LOG(INFO) << "CXL: Stored offset " << offset << " for root_index " << root_index;
+                        }
                 }
         }
 
@@ -216,26 +355,56 @@ class CXLMemory {
         {
                 void *addr = NULL;
                 int retry_count = 0;
-                const int MAX_RETRIES = 100;  // Try for ~10 seconds
+                const int MAX_RETRIES = 300;  // Try for ~30 seconds - allow time for Node 0 startup
 
                 while (retry_count < MAX_RETRIES) {
+                        // First try: Check if already in cxlalloc's root table
                         addr = cxlalloc_get_root(root_index);
                         if (addr) {
+                                LOG(INFO) << "CXL: Retrieved shared data for root_index " << root_index;
                                 *shared_data = addr;
                                 return;
                         }
 
-                        // NEW: Try to get offset instead
-                        uint64_t offset = (uint64_t)cxlalloc_get_root(root_index + 1000);
-                        if (offset != 0) {
-                                // Convert offset to local pointer
-                                addr = cxlalloc_offset_to_pointer(offset);
-                                if (addr) {
-                                        LOG(INFO) << "CXL: Retrieved data via offset " << offset << " for root_index " << root_index;
-                                        *shared_data = addr;
-                                        // Store in regular root for future access
-                                        cxlalloc_set_root(root_index, addr);
-                                        return;
+                        // Second try: For multi-process file sharing, read offset from file
+                        if (use_file_sync && sync_fd >= 0) {
+                                CHECK(root_index < MAX_ROOT_ENTRIES) << "root_index " << root_index << " exceeds MAX_ROOT_ENTRIES";
+
+                                // Ensure we see latest data from other nodes (9p filesystem)
+                                if (retry_count % 10 == 0) {  // Every 1 second
+                                        // Force kernel to read fresh data from server
+                                        posix_fadvise(sync_fd, 0, METADATA_REGION_SIZE, POSIX_FADV_DONTNEED);
+                                }
+
+                                // Read offset from file
+                                off_t file_offset = METADATA_FILE_OFFSET + (root_index * sizeof(uint64_t));
+                                uint64_t offset = 0;
+                                ssize_t bytes_read = pread(sync_fd, &offset, sizeof(uint64_t), file_offset);
+
+                                if (bytes_read == sizeof(uint64_t) && offset != 0) {
+                                        __sync_synchronize();  // Memory barrier
+
+                                        // Convert offset to local pointer
+                                        addr = cxlalloc_offset_to_pointer(offset);
+                                        if (addr) {
+                                                LOG(INFO) << "CXL: Retrieved data via file metadata offset " << offset << " for root_index " << root_index << " (file offset " << file_offset << ")";
+                                                *shared_data = addr;
+                                                // Store in local root for future access
+                                                cxlalloc_set_root(root_index, addr);
+                                                return;
+                                        }
+                                }
+                        } else {
+                                // Third try: Get offset from cxlalloc's root table (legacy approach)
+                                uint64_t offset = (uint64_t)cxlalloc_get_root(root_index + 1000);
+                                if (offset != 0) {
+                                        addr = cxlalloc_offset_to_pointer(offset);
+                                        if (addr) {
+                                                LOG(INFO) << "CXL: Retrieved data via offset " << offset << " for root_index " << root_index;
+                                                *shared_data = addr;
+                                                cxlalloc_set_root(root_index, addr);
+                                                return;
+                                        }
                                 }
                         }
 
