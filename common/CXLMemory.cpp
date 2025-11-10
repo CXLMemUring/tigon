@@ -14,4 +14,16 @@ int CXLMemory::sync_fd = -1;
 std::string CXLMemory::sync_file_path = "";
 bool CXLMemory::use_file_sync = false;
 
+// Initialize static members for mmap-based metadata sharing
+void* CXLMemory::metadata_mmap_base = nullptr;
+int CXLMemory::metadata_fd = -1;
+bool CXLMemory::use_mmap_metadata = false;
+
+// Initialize static members for custom allocator
+void* CXLMemory::shared_heap_base = nullptr;
+std::atomic<uint64_t> CXLMemory::shared_heap_offset(0);
+uint64_t CXLMemory::shared_heap_size = 0;
+bool CXLMemory::use_custom_allocator = false;
+boost::interprocess::managed_external_buffer* CXLMemory::managed_segment = nullptr;
+
 }

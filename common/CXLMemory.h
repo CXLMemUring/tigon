@@ -16,6 +16,10 @@
 #include "cxlalloc.h"
 #include <glog/logging.h>
 
+// Boost interprocess for managed shared memory
+#include <boost/interprocess/managed_external_buffer.hpp>
+#include <boost/interprocess/allocators/allocator.hpp>
+
 namespace star
 {
 
@@ -42,7 +46,7 @@ class CXLMemory {
                 MISC_FREE
         };
 
-        static constexpr uint64_t default_cxl_mem_size = (64 * 1024 * 1024);  // 128MB
+        static constexpr uint64_t default_cxl_mem_size = (128 * 1024 * 1024);  // 128MB
 
         static constexpr uint64_t cxl_transport_root_index = 0;
         static constexpr uint64_t cxl_data_migration_root_index = 1;
@@ -60,12 +64,25 @@ class CXLMemory {
         static constexpr size_t METADATA_REGION_SIZE = 4096;
         static constexpr size_t MAX_ROOT_ENTRIES = 512;  // 4096 / 8 = 512 uint64_t entries
         static constexpr off_t METADATA_FILE_OFFSET = 0;  // Metadata at start of file
+        static constexpr uint64_t METADATA_NO_DATA = UINT64_MAX;  // Sentinel value for "no data"
 
         // mmap-based shared metadata for device files (/dev/pmem0)
         // This region is mmapped separately from cxlalloc's heap
         static void* metadata_mmap_base;
         static int metadata_fd;
         static bool use_mmap_metadata;
+
+        // Custom shared memory allocator (replaces cxlalloc)
+        // Memory layout: [0-4KB]: metadata, [4KB-256MB]: heap allocations
+        static constexpr size_t HEAP_START_OFFSET = 4096;  // Start after metadata region
+        static void* shared_heap_base;           // Base address of mmap'd region
+        static std::atomic<uint64_t> shared_heap_offset;  // Current allocation offset (bump allocator)
+        static uint64_t shared_heap_size;        // Total size of heap region
+        static bool use_custom_allocator;        // Whether to use custom allocator
+
+        // Boost interprocess managed segment for offset_ptr compatibility
+        typedef boost::interprocess::managed_external_buffer::segment_manager segment_manager_t;
+        static boost::interprocess::managed_external_buffer* managed_segment;
 
         void init(Context context)
         {
@@ -78,13 +95,17 @@ class CXLMemory {
                 std::string resource = context.cxl_memory_resource.empty() ? std::string("SS") : context.cxl_memory_resource;
 
                 std::string effective_backend = backend;
+                bool is_device_file = (resource.find("/dev/dax") == 0) || (resource.find("/dev/pmem") == 0);
+
                 if (backend == "dax" || backend == "mmap") {
                         CHECK(resource != "SS") << "Backend " << backend << " requires --cxl_memory_resource to point at a file or device";
+
+                        // Use mmap backend for both device files and regular files
+                        // Device files like /dev/pmem0 are shared across VMs via QEMU CXL hooks
                         effective_backend = "mmap";
 
                         // Enable file synchronization ONLY for mmap backend with regular files (not device files)
                         // Device files (/dev/dax*, /dev/pmem*) don't support pwrite/pread operations
-                        bool is_device_file = (resource.find("/dev/dax") == 0) || (resource.find("/dev/pmem") == 0);
                         bool is_shared_file = (backend == "mmap" && !is_device_file);
 
                         if (hosts_num > 1 && thread_id == 0 && is_shared_file) {  // Only for shared regular files
@@ -125,7 +146,7 @@ class CXLMemory {
                                         use_mmap_metadata = false;
                                 } else {
                                         // mmap first 4KB as shared metadata region
-                                        metadata_mmap_base = mmap(NULL, METADATA_REGION_SIZE,
+                                        metadata_mmap_base = mmap(NULL, default_cxl_mem_size,
                                                                   PROT_READ | PROT_WRITE,
                                                                   MAP_SHARED, metadata_fd, 0);
 
@@ -135,9 +156,12 @@ class CXLMemory {
                                                 close(metadata_fd);
                                                 metadata_fd = -1;
                                         } else {
-                                                // Initialize metadata region to zero on first node only
+                                                // Initialize metadata region to METADATA_NO_DATA sentinel value on first node only
                                                 if (host_id == 0) {
-                                                        memset(metadata_mmap_base, 0, METADATA_REGION_SIZE);
+                                                        uint64_t* metadata = (uint64_t*)metadata_mmap_base;
+                                                        for (size_t i = 0; i < MAX_ROOT_ENTRIES; i++) {
+                                                                metadata[i] = METADATA_NO_DATA;
+                                                        }
                                                         msync(metadata_mmap_base, METADATA_REGION_SIZE, MS_SYNC);
                                                         LOG(INFO) << "Shared metadata region initialized at " << metadata_mmap_base
                                                                   << " (" << METADATA_REGION_SIZE << " bytes)";
@@ -150,18 +174,58 @@ class CXLMemory {
                         }
                 }
 
-                cxlalloc_init_backend(effective_backend.c_str());
-                cxlalloc_init(resource.c_str(), default_cxl_mem_size,
-                              thread_id + threads_num_per_host * host_id,
-                              threads_num_per_host * hosts_num,
-                              host_id,
-                              hosts_num);
-                LOG(INFO) << "cxlalloc initialized for thread " << thread_id
-                          << " (global ID = " << thread_id + threads_num_per_host * host_id
-                          << ") on host " << host_id
-                          << ": backend=" << backend
-                          << " resource=" << resource
-                          << " file_sync=" << (use_file_sync ? "enabled" : "disabled");
+                // Initialize custom allocator (replaces cxlalloc)
+                if (use_mmap_metadata && metadata_mmap_base != nullptr) {
+                        // Use our mmap'd region for allocations (no need for cxlalloc!)
+                        use_custom_allocator = true;
+                        shared_heap_base = metadata_mmap_base;
+                        shared_heap_size = default_cxl_mem_size;
+
+                        // Initialize boost managed segment (only once for thread 0)
+                        if (thread_id == 0) {
+                                try {
+                                        // Calculate heap region (after metadata)
+                                        void* heap_start = static_cast<char*>(shared_heap_base) + HEAP_START_OFFSET;
+                                        size_t heap_size = shared_heap_size - HEAP_START_OFFSET;
+
+                                        if (host_id == 0) {
+                                                // First node: create and initialize the managed segment
+                                                managed_segment = new boost::interprocess::managed_external_buffer(
+                                                        boost::interprocess::create_only,
+                                                        heap_start,
+                                                        heap_size
+                                                );
+                                                LOG(INFO) << "Boost managed segment CREATED: heap_start=" << heap_start
+                                                          << " heap_size=" << heap_size;
+                                        } else {
+                                                // Other nodes: open existing managed segment
+                                                managed_segment = new boost::interprocess::managed_external_buffer(
+                                                        boost::interprocess::open_only,
+                                                        heap_start,
+                                                        heap_size
+                                                );
+                                                LOG(INFO) << "Boost managed segment OPENED: heap_start=" << heap_start
+                                                          << " heap_size=" << heap_size;
+                                        }
+
+                                        shared_heap_offset.store(HEAP_START_OFFSET);
+                                        LOG(INFO) << "Custom allocator initialized with boost::interprocess";
+                                } catch (const std::exception& e) {
+                                        LOG(ERROR) << "Failed to initialize boost managed segment: " << e.what();
+                                        use_custom_allocator = false;
+                                        managed_segment = nullptr;
+                                }
+                        }
+                        LOG(INFO) << "Custom allocator ready for thread " << thread_id
+                                  << " (replaces cxlalloc)"
+                                  << " (global ID = " << thread_id + threads_num_per_host * host_id
+                                  << ") on host " << host_id;
+                } else {
+                        // Fallback: no custom allocator, use regular malloc
+                        use_custom_allocator = false;
+                        LOG(WARNING) << "Custom allocator NOT available (no mmap metadata). "
+                                     << "Allocations will use regular heap (not shared across VMs).";
+                }
         }
 
         // backward compatibility
@@ -189,7 +253,23 @@ class CXLMemory {
                         CHECK(0);
                 }
 
-                return cxlalloc_malloc(size);
+                // Use custom allocator if available, otherwise fallback to malloc
+                if (use_custom_allocator && managed_segment != nullptr) {
+                        // Use boost managed segment allocator (compatible with offset_ptr)
+                        try {
+                                void* ptr = managed_segment->allocate(size);
+                                if (ptr == nullptr) {
+                                        LOG(FATAL) << "Boost managed segment allocation failed! size=" << size;
+                                }
+                                return ptr;
+                        } catch (const boost::interprocess::bad_alloc& e) {
+                                LOG(FATAL) << "Out of shared memory! size=" << size << " error: " << e.what();
+                                return nullptr;
+                        }
+                } else {
+                        // Fallback: use regular malloc (not shared)
+                        return malloc(size);
+                }
         }
 
         void cxlalloc_free_wrapper(void *ptr, uint64_t size, int category, uint64_t metadata_size, uint64_t data_size)
@@ -251,8 +331,20 @@ class CXLMemory {
                         CHECK(0);
                 }
 
-                return cxlalloc_malloc(size);
+                // Use the same allocator implementation (calls first wrapper)
+                return cxlalloc_malloc_wrapper(size, category, 0, 0);
         }
+
+	// 1-argument overload for EBR code (no size/category tracking)
+	void cxlalloc_free_wrapper(void *ptr)
+	{
+		if (use_custom_allocator && managed_segment != nullptr) {
+			// Boost managed segment handles its own deallocation internally
+			// No explicit deallocate needed for EBR objects
+		} else if (!use_custom_allocator) {
+			cxlalloc_free(ptr);
+		}
+	}
 
         void cxlalloc_free_wrapper(void *ptr, uint64_t size, int category)
         {
@@ -307,13 +399,24 @@ class CXLMemory {
 
         static void commit_shared_data_initialization(uint64_t root_index, void *shared_data)
         {
-                cxlalloc_set_root(root_index, shared_data);
+                // Only call cxlalloc functions if NOT using custom allocator
+                // if (!use_custom_allocator) {
+                //         cxlalloc_set_root(root_index, shared_data);
+                // }
 
                 // Convert pointer to offset for sharing
                 uint64_t offset = 0;
-                if (cxlalloc_pointer_to_offset(shared_data, &offset)) {
+                bool conversion_success = false;
+
+                // Simple pointer arithmetic: offset = ptr - base
+                offset = static_cast<char*>(shared_data) - static_cast<char*>(shared_heap_base);
+                conversion_success = true;
+
+                if (conversion_success) {
                         // Store offset in cxlalloc's root table for single-process scenario
-                        cxlalloc_set_root(root_index + 1000, (void*)offset);
+                        // if (!use_custom_allocator) {
+                        //         cxlalloc_set_root(root_index + 1000, (void*)offset);
+                        // }
 
                         // NEW: For multi-process sharing via mmap metadata (device files)
                         if (use_mmap_metadata && metadata_mmap_base != nullptr) {
@@ -358,16 +461,55 @@ class CXLMemory {
                 const int MAX_RETRIES = 300;  // Try for ~30 seconds - allow time for Node 0 startup
 
                 while (retry_count < MAX_RETRIES) {
-                        // First try: Check if already in cxlalloc's root table
-                        addr = cxlalloc_get_root(root_index);
-                        if (addr) {
-                                LOG(INFO) << "CXL: Retrieved shared data for root_index " << root_index;
-                                *shared_data = addr;
-                                return;
+                        // First try: Check if already in cxlalloc's root table (only for non-custom allocator)
+                        if (!use_custom_allocator) {
+                                addr = cxlalloc_get_root(root_index);
+                                if (addr) {
+                                        LOG(INFO) << "CXL: Retrieved shared data for root_index " << root_index;
+                                        *shared_data = addr;
+                                        return;
+                                }
                         }
 
-                        // Second try: For multi-process file sharing, read offset from file
-                        if (use_file_sync && sync_fd >= 0) {
+                        // Second try: For mmap metadata (device files), read from shared mmap region
+                        if (use_mmap_metadata && metadata_mmap_base != nullptr) {
+                                CHECK(root_index < MAX_ROOT_ENTRIES) << "root_index " << root_index << " exceeds MAX_ROOT_ENTRIES";
+
+                                // Ensure we see latest data (memory barrier)
+                                __sync_synchronize();
+
+                                // Read offset from shared mmap region
+                                uint64_t* metadata = (uint64_t*)metadata_mmap_base;
+                                uint64_t offset = metadata[root_index];
+
+                                // DEBUG: Log what we're reading
+                                if (retry_count % 30 == 0) {  // Every 3 seconds
+                                        LOG(INFO) << "CXL DEBUG: Reading metadata[" << root_index << "] = " << offset
+                                                  << " (METADATA_NO_DATA=" << METADATA_NO_DATA << ") retry=" << retry_count;
+                                }
+
+                                // Check if data is available (not the sentinel value)
+                                if (offset != METADATA_NO_DATA) {
+                                        // Convert offset to local pointer (offset can be 0, which is valid!)
+                                        if (use_custom_allocator) {
+                                                addr = static_cast<char*>(shared_heap_base) + offset;
+                                        } else {
+                                                addr = cxlalloc_offset_to_pointer(offset);
+                                        }
+
+                                        if (addr) {
+                                                LOG(INFO) << "CXL: Read offset " << offset << " from shared metadata[" << root_index << "]";
+                                                *shared_data = addr;
+                                                // Store in local root for future access (only for non-custom allocator)
+                                                // if (!use_custom_allocator) {
+                                                //         cxlalloc_set_root(root_index, addr);
+                                                // }
+                                                return;
+                                        }
+                                }
+                        }
+                        // Third try: For multi-process file sharing (regular files), read offset from file
+                        else if (use_file_sync && sync_fd >= 0) {
                                 CHECK(root_index < MAX_ROOT_ENTRIES) << "root_index " << root_index << " exceeds MAX_ROOT_ENTRIES";
 
                                 // Ensure we see latest data from other nodes (9p filesystem)
@@ -385,24 +527,39 @@ class CXLMemory {
                                         __sync_synchronize();  // Memory barrier
 
                                         // Convert offset to local pointer
-                                        addr = cxlalloc_offset_to_pointer(offset);
+                                        if (use_custom_allocator) {
+                                                addr = static_cast<char*>(shared_heap_base) + offset;
+                                        } else {
+                                                addr = cxlalloc_offset_to_pointer(offset);
+                                        }
+
                                         if (addr) {
                                                 LOG(INFO) << "CXL: Retrieved data via file metadata offset " << offset << " for root_index " << root_index << " (file offset " << file_offset << ")";
                                                 *shared_data = addr;
-                                                // Store in local root for future access
-                                                cxlalloc_set_root(root_index, addr);
+                                                // Store in local root for future access (only for non-custom allocator)
+                                                // if (!use_custom_allocator) {
+                                                //         cxlalloc_set_root(root_index, addr);
+                                                // }
                                                 return;
                                         }
                                 }
                         } else {
-                                // Third try: Get offset from cxlalloc's root table (legacy approach)
+                                // Fourth try: Get offset from cxlalloc's root table (legacy approach)
                                 uint64_t offset = (uint64_t)cxlalloc_get_root(root_index + 1000);
                                 if (offset != 0) {
-                                        addr = cxlalloc_offset_to_pointer(offset);
+                                        // Convert offset to local pointer
+                                        if (use_custom_allocator) {
+                                                addr = static_cast<char*>(shared_heap_base) + offset;
+                                        } else {
+                                                addr = cxlalloc_offset_to_pointer(offset);
+                                        }
+
                                         if (addr) {
                                                 LOG(INFO) << "CXL: Retrieved data via offset " << offset << " for root_index " << root_index;
                                                 *shared_data = addr;
-                                                cxlalloc_set_root(root_index, addr);
+                                                // if (!use_custom_allocator) {
+                                                //         cxlalloc_set_root(root_index, addr);
+                                                // }
                                                 return;
                                         }
                                 }
