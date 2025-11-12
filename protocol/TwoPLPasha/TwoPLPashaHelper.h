@@ -107,7 +107,7 @@ struct TwoPLPashaMetadataShared {
         {
                 uint64_t scc_data_cxl_offset = 0;
 
-                bool ret = cxlalloc_pointer_to_offset(scc_data, &scc_data_cxl_offset);
+                bool ret = CXLMemory::cxlalloc_pointer_to_offset_wrapper(scc_data, &scc_data_cxl_offset);
                 DCHECK(ret == true);
 
                 atomic_word.store(scc_data_cxl_offset << SCC_DATA_OFFSET, std::memory_order_release);
@@ -144,7 +144,7 @@ retry:
         TwoPLPashaSharedDataSCC *get_scc_data()
         {
                 uint64_t scc_data_cxl_offset = atomic_word.load(std::memory_order_acquire) & (SCC_DATA_MASK << SCC_DATA_OFFSET);
-                void *scc_data_ptr = cxlalloc_offset_to_pointer(scc_data_cxl_offset);
+                void *scc_data_ptr = CXLMemory::cxlalloc_offset_to_pointer_wrapper(scc_data_cxl_offset);
 
                 return reinterpret_cast<TwoPLPashaSharedDataSCC *>(scc_data_ptr);
         }

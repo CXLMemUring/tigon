@@ -46,7 +46,7 @@ class CXLMemory {
                 MISC_FREE
         };
 
-        static constexpr uint64_t default_cxl_mem_size = (128 * 1024 * 1024);  // 128MB
+        static constexpr uint64_t default_cxl_mem_size = (512 * 1024 * 1024);  // 512MB (increased for 200MB HCC + overhead)
 
         static constexpr uint64_t cxl_transport_root_index = 0;
         static constexpr uint64_t cxl_data_migration_root_index = 1;
@@ -237,6 +237,14 @@ class CXLMemory {
                         size_total_hw_cc_usage.fetch_add(size);
                         size_index_usage.fetch_add(size);
                         break;
+                case METADATA_ALLOCATION:
+                        if (context.migration_policy == "LRU") {
+                                size_total_hw_cc_usage.fetch_add(size + 24);
+                        } else {
+                                size_total_hw_cc_usage.fetch_add(size);
+                        }
+                        size_metadata_usage.fetch_add(size);
+                        break;
                 case DATA_ALLOCATION:
                         size_total_hw_cc_usage.fetch_add(metadata_size);
                         size_metadata_usage.fetch_add(metadata_size);
@@ -380,6 +388,39 @@ class CXLMemory {
                 }
         }
 
+        // Pointer<->Offset conversion wrappers (compatible with both cxlalloc and boost)
+        static bool cxlalloc_pointer_to_offset_wrapper(void *ptr, uint64_t *offset)
+        {
+                if (use_custom_allocator && shared_heap_base != nullptr) {
+                        // Boost allocator: calculate offset from heap base
+                        if (ptr < shared_heap_base || ptr >= static_cast<char*>(shared_heap_base) + default_cxl_mem_size) {
+                                LOG(ERROR) << "Pointer " << ptr << " is outside boost heap range ["
+                                           << shared_heap_base << ", " << (static_cast<char*>(shared_heap_base) + default_cxl_mem_size) << ")";
+                                return false;
+                        }
+                        *offset = static_cast<char*>(ptr) - static_cast<char*>(shared_heap_base);
+                        return true;
+                } else {
+                        // cxlalloc: use existing function
+                        return cxlalloc_pointer_to_offset(ptr, offset);
+                }
+        }
+
+        static void *cxlalloc_offset_to_pointer_wrapper(uint64_t offset)
+        {
+                if (use_custom_allocator && shared_heap_base != nullptr) {
+                        // Boost allocator: add offset to heap base
+                        if (offset >= default_cxl_mem_size) {
+                                LOG(ERROR) << "Offset " << offset << " exceeds heap size " << default_cxl_mem_size;
+                                return nullptr;
+                        }
+                        return static_cast<char*>(shared_heap_base) + offset;
+                } else {
+                        // cxlalloc: use existing function
+                        return cxlalloc_offset_to_pointer(offset);
+                }
+        }
+
         // Synchronize memory to file system
         static void sync_to_filesystem()
         {
@@ -474,6 +515,12 @@ class CXLMemory {
                         // Second try: For mmap metadata (device files), read from shared mmap region
                         if (use_mmap_metadata && metadata_mmap_base != nullptr) {
                                 CHECK(root_index < MAX_ROOT_ENTRIES) << "root_index " << root_index << " exceeds MAX_ROOT_ENTRIES";
+
+                                // Invalidate page cache to see latest data from other VMs
+                                // This forces kernel to re-read from /dev/pmem0
+                                if (retry_count % 10 == 0) {  // Every 1 second
+                                        msync(metadata_mmap_base, METADATA_REGION_SIZE, MS_INVALIDATE);
+                                }
 
                                 // Ensure we see latest data (memory barrier)
                                 __sync_synchronize();
