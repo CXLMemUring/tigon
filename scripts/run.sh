@@ -3,6 +3,9 @@
 set -uo pipefail
 # set -x
 
+# Disable AVX/AVX2 in glibc to avoid SIGILL on CPUs without AVX support
+export GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX_Usable,-AVX2_Usable,-AVX512F_Usable
+
 typeset SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 typeset current_date_time="`date +%Y%m%d%H%M`"
 

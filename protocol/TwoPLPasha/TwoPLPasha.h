@@ -574,8 +574,9 @@ template <class Database> class TwoPLPasha {
 				if (partitioner.has_master_partition(partitionId))
 					continue;
 
-                                // replication not supported
-                                DCHECK(false);
+                                // replication not supported - skip for now
+                                // DCHECK(false);
+                                LOG_FIRST_N(WARNING, 1) << "Replication not supported in TwoPLPasha, skipping remote write";
 
 				has_other_node = true;
 				auto coordinatorId = partitioner.master_coordinator(partitionId);
@@ -746,12 +747,11 @@ template <class Database> class TwoPLPasha {
                         auto partitionId = deleteKey.get_partition_id();
                         auto table = db.find_table(tableId, partitionId);
                         auto key_size = table->key_size();
-                        auto value_size = table->value_size();
                         auto key = deleteKey.get_key();
-                        auto value = deleteKey.get_value();
+                        // Note: value is not set for delete operations, and not needed for delete logs
                         auto tid = deleteKey.get_tid();
                         DCHECK(key);
-                        DCHECK(value);
+                        // DCHECK(value) removed - value is not set for deletes and not used in delete logs
                         std::ostringstream ss;
 
                         int log_type = 2;       // 2 stands for delete

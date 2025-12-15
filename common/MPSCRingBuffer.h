@@ -6,7 +6,6 @@
 
 #include "common/Message.h"
 #include "common/CXLMemory.h"
-#include <boost/interprocess/offset_ptr.hpp>
 #include <stddef.h>
 #include <atomic>
 #include <xmmintrin.h>
@@ -24,6 +23,24 @@ class MPSCRingBuffer {
                 uint8_t data[];
         };
 
+        // Simple memset without AVX (glibc's memset may use AVX2)
+        static void simple_memset(void* dest, int val, size_t len) {
+                volatile unsigned char* p = static_cast<volatile unsigned char*>(dest);
+                unsigned char v = static_cast<unsigned char>(val);
+                for (size_t i = 0; i < len; i++) {
+                        p[i] = v;
+                }
+        }
+
+        // Simple memcpy without AVX (glibc's memcpy may use AVX2)
+        static void simple_memcpy(void* dest, const void* src, size_t len) {
+                volatile unsigned char* d = static_cast<volatile unsigned char*>(dest);
+                const volatile unsigned char* s = static_cast<const volatile unsigned char*>(src);
+                for (size_t i = 0; i < len; i++) {
+                        d[i] = s[i];
+                }
+        }
+
         MPSCRingBuffer(uint64_t entry_struct_size, uint64_t entry_num)
                 : entry_struct_size(entry_struct_size)
                 , entry_data_size(entry_struct_size - 9)
@@ -34,12 +51,12 @@ class MPSCRingBuffer {
         {
                 LOG(INFO) << "entry_struct_size: " << entry_struct_size << " entry_num: " << entry_num;
                 entries_buffer = reinterpret_cast<char *>(cxl_memory.cxlalloc_malloc_wrapper(entry_struct_size * entry_num, CXLMemory::TRANSPORT_ALLOCATION));
-                for (int i = 0; i < entry_num; i++) {
-                        Entry *entry = reinterpret_cast<Entry *>(entries_buffer.get() + i * entry_struct_size);
+                for (uint64_t i = 0; i < entry_num; i++) {
+                        Entry *entry = reinterpret_cast<Entry *>(entries_buffer + i * entry_struct_size);
                         entry->is_ready = 0;
                         entry->remaining_size = 0;
                         entry->dequeue_offset = 0;
-                        memset(entry->data, 0, entry_data_size);
+                        simple_memset(entry->data, 0, entry_data_size);  // Avoid glibc AVX memset
                 }
         }
 
@@ -85,10 +102,10 @@ class MPSCRingBuffer {
                 cur_tail %= entry_num;
 
                 /* get the entry */
-                entry = reinterpret_cast<Entry *>(entries_buffer.get() + cur_tail * entry_struct_size);
+                entry = reinterpret_cast<Entry *>(entries_buffer + cur_tail * entry_struct_size);
 
                 /* memcpy the data to the target endpoint's receive queue */
-                memcpy(entry->data, data, data_size);
+                simple_memcpy(entry->data, data, data_size);  // Avoid glibc AVX memcpy
                 clwb(entry->data, data_size);
 
                 entry->remaining_size = data_size;
@@ -115,7 +132,7 @@ class MPSCRingBuffer {
                 cur_head = head.load(std::memory_order_acquire);
 
                 /* get the entry */
-                entry = reinterpret_cast<Entry *>(entries_buffer.get() + cur_head * entry_struct_size);
+                entry = reinterpret_cast<Entry *>(entries_buffer + cur_head * entry_struct_size);
 
                 /* wait for the entry to be ready */
                 while (entry->is_ready.load(std::memory_order_acquire) != 1);
@@ -131,7 +148,7 @@ class MPSCRingBuffer {
 
                 /* memcpy the data to the user-provided buffer and update the metadata */
                 clflush(entry->data, dequeue_size);
-                memcpy(data_buffer, entry->data, dequeue_size);
+                simple_memcpy(data_buffer, entry->data, dequeue_size);  // Avoid glibc AVX memcpy
                 entry->dequeue_offset += dequeue_size;
                 entry->remaining_size -= dequeue_size;
 
@@ -181,7 +198,7 @@ class MPSCRingBuffer {
                  * covering the given range.
                  */
                 for (uint64_t ptr = (uint64_t)addr & ~(cacheline_size - 1); ptr < (uint64_t)addr + len; ptr += cacheline_size) {
-                        _mm_clflushopt((void *)ptr);
+                        _mm_clflush((void *)ptr);  // Use basic clflush (available on all x86-64)
                 }
 
                 // make sure clflush completes before memcpy
@@ -195,7 +212,7 @@ class MPSCRingBuffer {
                  * covering the given range.
                  */
                 for (uint64_t ptr = (uint64_t)addr & ~(cacheline_size - 1); ptr < (uint64_t)addr + len; ptr += cacheline_size) {
-                        _mm_clwb((void *)ptr);
+                        _mm_clflush((void *)ptr);  // Fallback: use clflush instead of clwb
                 }
 
                 // make sure clwb completes before memcpy
@@ -209,7 +226,7 @@ class MPSCRingBuffer {
         std::atomic<uint64_t> head;
         std::atomic<uint64_t> tail;
         std::atomic<uint64_t> count;
-        boost::interprocess::offset_ptr<char> entries_buffer;
+        char* entries_buffer;  // Simple pointer instead of boost::interprocess::offset_ptr
 };
 
 }

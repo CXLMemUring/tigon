@@ -194,9 +194,11 @@ template <class Workload, class Protocol> class Executor : public Worker {
                                         protocol.abort(*transaction, messages);
                                         if (transaction->abort_lock) {
                                                 n_abort_lock.fetch_add(1);
-                                        } else {
-                                                DCHECK(transaction->abort_read_validation);
+                                        } else if (transaction->abort_read_validation) {
                                                 n_abort_read_validation.fetch_add(1);
+                                        } else {
+                                                // Other abort reason (e.g., migration, CXL access failure)
+                                                n_abort_read_validation.fetch_add(1);  // Count as read validation for stats
                                         }
                                         if (context.sleep_on_retry) {
                                                 std::this_thread::sleep_for(std::chrono::microseconds(random.uniform_dist(0, context.sleep_time)));

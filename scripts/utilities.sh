@@ -4,6 +4,9 @@ set -uo pipefail
 
 # set -x
 
+# Disable AVX/AVX2 in glibc to avoid SIGILL on CPUs without AVX support
+export GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX_Usable,-AVX2_Usable,-AVX512F_Usable
+
 # Configuration for target machines
 # Set USE_REMOTE_HOSTS=1 to use remote IP addresses instead of localhost
 USE_REMOTE_HOSTS=${USE_REMOTE_HOSTS:-1}
@@ -19,7 +22,9 @@ function ssh_command {
         # Use remote IP addresses
         typeset ip_suffix=$(expr $REMOTE_START_SUFFIX + $vm_id)
         typeset target_ip="${REMOTE_BASE_IP}.${ip_suffix}"
-        ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -p $REMOTE_PORT ${REMOTE_USER}@${target_ip} "$command"
+        # Prepend GLIBC_TUNABLES to disable AVX on remote host
+        typeset remote_command="export GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX_Usable,-AVX2_Usable,-AVX512F_Usable; $command"
+        ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -p $REMOTE_PORT ${REMOTE_USER}@${target_ip} "$remote_command"
 }
 
 function sync_files {

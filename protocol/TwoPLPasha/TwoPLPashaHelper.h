@@ -26,6 +26,15 @@
 namespace star
 {
 
+// Simple memcpy without AVX (glibc's memcpy may use AVX2 despite GLIBC_TUNABLES)
+static inline void simple_memcpy_pasha(void* dest, const void* src, size_t len) {
+        volatile unsigned char* d = static_cast<volatile unsigned char*>(dest);
+        const volatile unsigned char* s = static_cast<const volatile unsigned char*>(src);
+        for (size_t i = 0; i < len; i++) {
+                d[i] = s[i];
+        }
+}
+
 struct TwoPLPashaSharedDataSCC {
         TwoPLPashaSharedDataSCC()
                 : tid(0)
@@ -334,7 +343,7 @@ class TwoPLPashaHelper {
                 DCHECK(lmeta->is_valid == true);
                 if (lmeta->is_migrated == false) {
 		        void *src = std::get<1>(row);
-		        std::memcpy(dest, src, size);
+		        simple_memcpy_pasha(dest, src, size);
                         tid_ = lmeta->tid;
                 } else {
                         // statistics
@@ -371,7 +380,7 @@ class TwoPLPashaHelper {
                 DCHECK(lmeta->is_valid == true);
                 if (lmeta->is_migrated == false) {
                         void *data_ptr = std::get<1>(row);
-                        std::memcpy(data_ptr, value, value_size);
+                        simple_memcpy_pasha(data_ptr, value, value_size);
                         lmeta->is_data_modified_since_moved_out = true;
                 } else {
                         TwoPLPashaMetadataShared *smeta = reinterpret_cast<TwoPLPashaMetadataShared *>(lmeta->migrated_row);
@@ -554,7 +563,7 @@ out_unlock_lmeta:
                         success = true;
 
                         // read the data
-                        std::memcpy(dest, src, size);
+                        simple_memcpy_pasha(dest, src, size);
                 } else {
                         TwoPLPashaMetadataShared *smeta = reinterpret_cast<TwoPLPashaMetadataShared *>(lmeta->migrated_row);
                         TwoPLPashaSharedDataSCC *scc_data = smeta->get_scc_data();
@@ -612,7 +621,7 @@ out_unlock_lmeta:
                         success = true;
 
                         // read the data from the local copy
-                        memcpy(dest, src, size);
+                        simple_memcpy_pasha(dest, src, size);
 
                         smeta->unlock();
                 }
@@ -821,7 +830,7 @@ out_unlock_lmeta:
                         success = true;
 
                         // read the data
-                        std::memcpy(dest, src, size);
+                        simple_memcpy_pasha(dest, src, size);
                 } else {
                         TwoPLPashaMetadataShared *smeta = reinterpret_cast<TwoPLPashaMetadataShared *>(lmeta->migrated_row);
                         TwoPLPashaSharedDataSCC *scc_data = smeta->get_scc_data();
@@ -879,7 +888,7 @@ out_unlock_lmeta:
                         success = true;
 
                         // read the data from the local copy
-                        memcpy(dest, src, size);
+                        simple_memcpy_pasha(dest, src, size);
 
                         smeta->unlock();
                 }

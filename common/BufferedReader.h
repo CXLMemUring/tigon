@@ -72,7 +72,8 @@ class BufferedReader {
 
 	std::unique_ptr<Message> next_message()
 	{
-		DCHECK(socket != nullptr);
+		// Check the appropriate transport is available
+		DCHECK(use_cxl_transport ? (cxl_ringbuffer != nullptr) : (socket != nullptr));
 
 		fetch_message();
 		if (!has_message()) {
@@ -106,7 +107,8 @@ class BufferedReader {
     private:
 	void fetch_message()
 	{
-		DCHECK(socket != nullptr);
+		// Check the appropriate transport is available
+		DCHECK(use_cxl_transport ? (cxl_ringbuffer != nullptr) : (socket != nullptr));
 
 		// return if there is a message left
 		if (has_message()) {

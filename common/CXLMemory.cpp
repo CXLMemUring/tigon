@@ -19,11 +19,11 @@ void* CXLMemory::metadata_mmap_base = nullptr;
 int CXLMemory::metadata_fd = -1;
 bool CXLMemory::use_mmap_metadata = false;
 
-// Initialize static members for custom allocator
+// Initialize static members for custom allocator (simple bump allocator)
 void* CXLMemory::shared_heap_base = nullptr;
 std::atomic<uint64_t> CXLMemory::shared_heap_offset(0);
 uint64_t CXLMemory::shared_heap_size = 0;
 bool CXLMemory::use_custom_allocator = false;
-boost::interprocess::managed_external_buffer* CXLMemory::managed_segment = nullptr;
+bool CXLMemory::bump_allocator_initialized = false;
 
 }

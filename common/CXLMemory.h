@@ -16,9 +16,7 @@
 #include "cxlalloc.h"
 #include <glog/logging.h>
 
-// Boost interprocess for managed shared memory
-#include <boost/interprocess/managed_external_buffer.hpp>
-#include <boost/interprocess/allocators/allocator.hpp>
+// Simple bump allocator (no boost::interprocess to avoid AVX2/AVX512 instructions)
 
 namespace star
 {
@@ -72,17 +70,29 @@ class CXLMemory {
         static int metadata_fd;
         static bool use_mmap_metadata;
 
-        // Custom shared memory allocator (replaces cxlalloc)
-        // Memory layout: [0-4KB]: metadata, [4KB-256MB]: heap allocations
+        // Fixed virtual address for shared memory (ensures pointers are valid across VMs)
+        // Using 0x100000000 (4GB) which is typically available in user space
+        static constexpr uintptr_t FIXED_MMAP_ADDR_VALUE = 0x100000000ULL;
+        static inline void* get_fixed_mmap_address() { return (void*)FIXED_MMAP_ADDR_VALUE; }
+
+        // Custom shared memory allocator (replaces cxlalloc and boost::interprocess)
+        // Memory layout: [0-4KB]: metadata, [4KB-512MB]: heap allocations
+        // Metadata layout: [0-4080]: root entries, [4080-4088]: shared bump allocator offset
         static constexpr size_t HEAP_START_OFFSET = 4096;  // Start after metadata region
+        static constexpr size_t BUMP_ALLOCATOR_ALIGNMENT = 16;  // Alignment for allocations
+        static constexpr size_t BUMP_OFFSET_SLOT = 510;  // Metadata slot for shared bump allocator offset
         static void* shared_heap_base;           // Base address of mmap'd region
-        static std::atomic<uint64_t> shared_heap_offset;  // Current allocation offset (bump allocator)
+        static std::atomic<uint64_t> shared_heap_offset;  // Local fallback (not used for shared memory)
         static uint64_t shared_heap_size;        // Total size of heap region
         static bool use_custom_allocator;        // Whether to use custom allocator
+        static bool bump_allocator_initialized;  // Whether bump allocator is ready
 
-        // Boost interprocess managed segment for offset_ptr compatibility
-        typedef boost::interprocess::managed_external_buffer::segment_manager segment_manager_t;
-        static boost::interprocess::managed_external_buffer* managed_segment;
+        // Get pointer to shared bump offset in mmap'd region (for cross-process atomic ops)
+        static volatile uint64_t* get_shared_bump_offset_ptr() {
+                if (metadata_mmap_base == nullptr) return nullptr;
+                return reinterpret_cast<volatile uint64_t*>(
+                        static_cast<char*>(metadata_mmap_base) + BUMP_OFFSET_SLOT * sizeof(uint64_t));
+        }
 
         void init(Context context)
         {
@@ -145,10 +155,11 @@ class CXLMemory {
                                         LOG(ERROR) << "Failed to open " << resource << " for mmap metadata: " << strerror(errno);
                                         use_mmap_metadata = false;
                                 } else {
-                                        // mmap first 4KB as shared metadata region
-                                        metadata_mmap_base = mmap(NULL, default_cxl_mem_size,
+                                        // mmap the entire CXL region at a FIXED virtual address
+                                        // This ensures pointers are valid across all VMs
+                                        metadata_mmap_base = mmap(get_fixed_mmap_address(), default_cxl_mem_size,
                                                                   PROT_READ | PROT_WRITE,
-                                                                  MAP_SHARED, metadata_fd, 0);
+                                                                  MAP_SHARED | MAP_FIXED, metadata_fd, 0);
 
                                         if (metadata_mmap_base == MAP_FAILED) {
                                                 LOG(ERROR) << "Failed to mmap metadata region: " << strerror(errno);
@@ -156,6 +167,11 @@ class CXLMemory {
                                                 close(metadata_fd);
                                                 metadata_fd = -1;
                                         } else {
+                                                // Verify the mapping is at the expected fixed address
+                                                CHECK(metadata_mmap_base == get_fixed_mmap_address())
+                                                        << "mmap returned wrong address: " << metadata_mmap_base
+                                                        << " expected: " << get_fixed_mmap_address();
+
                                                 // Initialize metadata region to METADATA_NO_DATA sentinel value on first node only
                                                 if (host_id == 0) {
                                                         uint64_t* metadata = (uint64_t*)metadata_mmap_base;
@@ -163,58 +179,51 @@ class CXLMemory {
                                                                 metadata[i] = METADATA_NO_DATA;
                                                         }
                                                         msync(metadata_mmap_base, METADATA_REGION_SIZE, MS_SYNC);
-                                                        LOG(INFO) << "Shared metadata region initialized at " << metadata_mmap_base
-                                                                  << " (" << METADATA_REGION_SIZE << " bytes)";
+                                                        LOG(INFO) << "Shared CXL memory FIXED at " << metadata_mmap_base
+                                                                  << " (size=" << default_cxl_mem_size << " bytes)";
                                                 } else {
-                                                        LOG(INFO) << "Shared metadata region mapped at " << metadata_mmap_base
-                                                                  << " (" << METADATA_REGION_SIZE << " bytes)";
+                                                        LOG(INFO) << "Shared CXL memory FIXED at " << metadata_mmap_base
+                                                                  << " (size=" << default_cxl_mem_size << " bytes)";
                                                 }
                                         }
                                 }
                         }
                 }
 
-                // Initialize custom allocator (replaces cxlalloc)
+                // Initialize custom allocator (replaces cxlalloc and boost::interprocess)
                 if (use_mmap_metadata && metadata_mmap_base != nullptr) {
                         // Use our mmap'd region for allocations (no need for cxlalloc!)
                         use_custom_allocator = true;
                         shared_heap_base = metadata_mmap_base;
                         shared_heap_size = default_cxl_mem_size;
 
-                        // Initialize boost managed segment (only once for thread 0)
+                        // Initialize simple bump allocator (only once for thread 0)
                         if (thread_id == 0) {
-                                try {
-                                        // Calculate heap region (after metadata)
-                                        void* heap_start = static_cast<char*>(shared_heap_base) + HEAP_START_OFFSET;
-                                        size_t heap_size = shared_heap_size - HEAP_START_OFFSET;
+                                // Calculate heap region (after metadata)
+                                size_t heap_size = shared_heap_size - HEAP_START_OFFSET;
 
-                                        if (host_id == 0) {
-                                                // First node: create and initialize the managed segment
-                                                managed_segment = new boost::interprocess::managed_external_buffer(
-                                                        boost::interprocess::create_only,
-                                                        heap_start,
-                                                        heap_size
-                                                );
-                                                LOG(INFO) << "Boost managed segment CREATED: heap_start=" << heap_start
-                                                          << " heap_size=" << heap_size;
-                                        } else {
-                                                // Other nodes: open existing managed segment
-                                                managed_segment = new boost::interprocess::managed_external_buffer(
-                                                        boost::interprocess::open_only,
-                                                        heap_start,
-                                                        heap_size
-                                                );
-                                                LOG(INFO) << "Boost managed segment OPENED: heap_start=" << heap_start
-                                                          << " heap_size=" << heap_size;
-                                        }
+                                // Get pointer to shared bump offset in mmap'd region
+                                volatile uint64_t* shared_offset_ptr = get_shared_bump_offset_ptr();
 
-                                        shared_heap_offset.store(HEAP_START_OFFSET);
-                                        LOG(INFO) << "Custom allocator initialized with boost::interprocess";
-                                } catch (const std::exception& e) {
-                                        LOG(ERROR) << "Failed to initialize boost managed segment: " << e.what();
-                                        use_custom_allocator = false;
-                                        managed_segment = nullptr;
+                                if (host_id == 0) {
+                                        // First node: initialize the bump allocator offset in SHARED memory
+                                        *shared_offset_ptr = HEAP_START_OFFSET;
+                                        __sync_synchronize();  // Memory barrier
+                                        bump_allocator_initialized = true;
+                                        LOG(INFO) << "Bump allocator CREATED in shared memory: heap_start=" << HEAP_START_OFFSET
+                                                  << " heap_size=" << heap_size
+                                                  << " offset_ptr=" << (void*)shared_offset_ptr;
+                                } else {
+                                        // Other nodes: read existing offset from shared memory
+                                        __sync_synchronize();  // Memory barrier
+                                        uint64_t current_offset = *shared_offset_ptr;
+                                        bump_allocator_initialized = true;
+                                        LOG(INFO) << "Bump allocator OPENED from shared memory: current_offset=" << current_offset
+                                                  << " heap_size=" << heap_size
+                                                  << " offset_ptr=" << (void*)shared_offset_ptr;
                                 }
+
+                                LOG(INFO) << "Shared bump allocator initialized (cross-process safe)";
                         }
                         LOG(INFO) << "Custom allocator ready for thread " << thread_id
                                   << " (replaces cxlalloc)"
@@ -262,21 +271,36 @@ class CXLMemory {
                 }
 
                 // Use custom allocator if available, otherwise fallback to malloc
-                if (use_custom_allocator && managed_segment != nullptr) {
-                        // Use boost managed segment allocator (compatible with offset_ptr)
-                        try {
-                                void* ptr = managed_segment->allocate(size);
-                                if (ptr == nullptr) {
-                                        LOG(FATAL) << "Boost managed segment allocation failed! size=" << size;
-                                }
-                                return ptr;
-                        } catch (const boost::interprocess::bad_alloc& e) {
-                                LOG(FATAL) << "Out of shared memory! size=" << size << " error: " << e.what();
+                if (use_custom_allocator && bump_allocator_initialized && metadata_mmap_base != nullptr) {
+                        // Simple bump allocator: atomically increment offset in SHARED memory
+                        // Align size to BUMP_ALLOCATOR_ALIGNMENT
+                        uint64_t aligned_size = (size + BUMP_ALLOCATOR_ALIGNMENT - 1) & ~(BUMP_ALLOCATOR_ALIGNMENT - 1);
+
+                        // Use atomic fetch-and-add on the shared memory location
+                        volatile uint64_t* shared_offset_ptr = get_shared_bump_offset_ptr();
+                        uint64_t old_offset = __sync_fetch_and_add(shared_offset_ptr, aligned_size);
+                        uint64_t new_offset = old_offset + aligned_size;
+
+                        // Check for overflow
+                        if (new_offset > shared_heap_size) {
+                                LOG(FATAL) << "Out of shared memory! size=" << size
+                                           << " aligned_size=" << aligned_size
+                                           << " old_offset=" << old_offset
+                                           << " heap_size=" << shared_heap_size;
                                 return nullptr;
                         }
+
+                        void* ptr = static_cast<char*>(shared_heap_base) + old_offset;
+                        LOG(INFO) << "Bump alloc: size=" << size << " base=" << shared_heap_base
+                                  << " offset=" << old_offset << " ptr=" << ptr;
+                        return ptr;
                 } else {
                         // Fallback: use regular malloc (not shared)
-                        return malloc(size);
+                        void* ptr = malloc(size);
+                        LOG(INFO) << "Malloc fallback: size=" << size << " ptr=" << ptr
+                                  << " use_custom=" << use_custom_allocator
+                                  << " bump_init=" << bump_allocator_initialized;
+                        return ptr;
                 }
         }
 
@@ -346,9 +370,9 @@ class CXLMemory {
 	// 1-argument overload for EBR code (no size/category tracking)
 	void cxlalloc_free_wrapper(void *ptr)
 	{
-		if (use_custom_allocator && managed_segment != nullptr) {
-			// Boost managed segment handles its own deallocation internally
-			// No explicit deallocate needed for EBR objects
+		if (use_custom_allocator && bump_allocator_initialized) {
+			// Bump allocator doesn't support individual frees
+			// Memory is reclaimed when the entire region is reset
 		} else if (!use_custom_allocator) {
 			cxlalloc_free(ptr);
 		}
@@ -388,13 +412,13 @@ class CXLMemory {
                 }
         }
 
-        // Pointer<->Offset conversion wrappers (compatible with both cxlalloc and boost)
+        // Pointer<->Offset conversion wrappers (compatible with cxlalloc and bump allocator)
         static bool cxlalloc_pointer_to_offset_wrapper(void *ptr, uint64_t *offset)
         {
                 if (use_custom_allocator && shared_heap_base != nullptr) {
-                        // Boost allocator: calculate offset from heap base
+                        // Bump allocator: calculate offset from heap base
                         if (ptr < shared_heap_base || ptr >= static_cast<char*>(shared_heap_base) + default_cxl_mem_size) {
-                                LOG(ERROR) << "Pointer " << ptr << " is outside boost heap range ["
+                                LOG(ERROR) << "Pointer " << ptr << " is outside heap range ["
                                            << shared_heap_base << ", " << (static_cast<char*>(shared_heap_base) + default_cxl_mem_size) << ")";
                                 return false;
                         }
@@ -409,7 +433,7 @@ class CXLMemory {
         static void *cxlalloc_offset_to_pointer_wrapper(uint64_t offset)
         {
                 if (use_custom_allocator && shared_heap_base != nullptr) {
-                        // Boost allocator: add offset to heap base
+                        // Bump allocator: add offset to heap base
                         if (offset >= default_cxl_mem_size) {
                                 LOG(ERROR) << "Offset " << offset << " exceeds heap size " << default_cxl_mem_size;
                                 return nullptr;

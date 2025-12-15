@@ -3,6 +3,10 @@
 
 set -e
 
+# Disable AVX/AVX2 in glibc to avoid SIGILL on CPUs without AVX support
+export GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX_Usable,-AVX2_Usable,-AVX512F_Usable
+GLIBC_ENV="export GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX_Usable,-AVX2_Usable,-AVX512F_Usable;"
+
 echo "========================================="
 echo "TPCC Manual Launcher with DAX"
 echo "========================================="
@@ -26,7 +30,7 @@ echo "[2/4] 启动 Node 0 (192.168.100.10) - 初始化共享内存..."
 ssh root@192.168.100.10 "cd ~/pasha && rm -f output.txt"
 
 # Use a background job marker file to track when Node 0 is ready
-ssh root@192.168.100.10 "cd ~/pasha && ./bench_tpcc \
+ssh root@192.168.100.10 "${GLIBC_ENV} cd ~/pasha && ./bench_tpcc \
   --logtostderr=1 \
   --id=0 \
   --servers='${SERVERS}' \
@@ -81,7 +85,7 @@ done
 echo "[3/4] 启动 Node 1 (192.168.100.11)..."
 ssh root@192.168.100.11 "cd ~/pasha && rm -f output.txt"
 
-ssh root@192.168.100.11 "cd ~/pasha && ./bench_tpcc \
+ssh root@192.168.100.11 "${GLIBC_ENV} cd ~/pasha && ./bench_tpcc \
   --logtostderr=1 \
   --id=1 \
   --servers='${SERVERS}' \

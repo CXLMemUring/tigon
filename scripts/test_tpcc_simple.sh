@@ -3,6 +3,10 @@
 
 set -e
 
+# Disable AVX/AVX2 in glibc to avoid SIGILL on CPUs without AVX support
+export GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX_Usable,-AVX2_Usable,-AVX512F_Usable
+GLIBC_ENV="export GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX_Usable,-AVX2_Usable,-AVX512F_Usable;"
+
 echo "========================================="
 echo "Starting TPCC on 2 nodes with DAX"
 echo "========================================="
@@ -23,7 +27,7 @@ QUERY="mixed"
 
 # Start node 1 (background)
 echo "Starting Node 1 (192.168.100.11) in background..."
-ssh -f root@192.168.100.11 "cd ~/pasha && nohup ./bench_tpcc \
+ssh -f root@192.168.100.11 "${GLIBC_ENV} cd ~/pasha && nohup ./bench_tpcc \
   --logtostderr=1 \
   --id=1 \
   --servers='${SERVERS}' \
@@ -71,7 +75,7 @@ sleep 3
 echo ""
 echo "Starting Node 0 (192.168.100.10)..."
 echo "========================================="
-ssh root@192.168.100.10 "cd ~/pasha && ./bench_tpcc \
+ssh root@192.168.100.10 "${GLIBC_ENV} cd ~/pasha && ./bench_tpcc \
   --logtostderr=1 \
   --id=0 \
   --servers='${SERVERS}' \

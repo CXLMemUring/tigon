@@ -48,6 +48,15 @@ class SCCManager {
     protected:
         static constexpr uint64_t cacheline_size = 64;
 
+        // Simple memcpy without AVX (glibc's memcpy may use AVX2 despite GLIBC_TUNABLES)
+        static inline void simple_memcpy(void* dest, const void* src, size_t len) {
+                volatile unsigned char* d = static_cast<volatile unsigned char*>(dest);
+                const volatile unsigned char* s = static_cast<const volatile unsigned char*>(src);
+                for (size_t i = 0; i < len; i++) {
+                        d[i] = s[i];
+                }
+        }
+
         inline void clflush(const void *addr, uint64_t len)
         {
                 // statistics
@@ -58,7 +67,7 @@ class SCCManager {
                  * covering the given range.
                  */
                 for (uint64_t ptr = (uint64_t)addr & ~(cacheline_size - 1); ptr < (uint64_t)addr + len; ptr += cacheline_size) {
-                        _mm_clflushopt((void *)ptr);
+                        _mm_clflush((void *)ptr);  // Use basic clflush (available on all x86-64)
                 }
 
                 // make sure clflush completes before memcpy
@@ -75,7 +84,7 @@ class SCCManager {
                  * covering the given range.
                  */
                 for (uint64_t ptr = (uint64_t)addr & ~(cacheline_size - 1); ptr < (uint64_t)addr + len; ptr += cacheline_size) {
-                        _mm_clwb((void *)ptr);
+                        _mm_clflush((void *)ptr);  // Fallback: use clflush instead of clwb
                 }
 
                 // make sure clwb completes before memcpy
