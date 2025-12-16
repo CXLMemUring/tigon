@@ -111,8 +111,11 @@ class MPSCRingBuffer {
                 entry->remaining_size = data_size;
                 entry->dequeue_offset = 0;
 
-                /* mark the entry as ready */
+                /* mark the entry as ready and flush to shared memory */
                 entry->is_ready.store(1, std::memory_order_release);
+
+                /* CRITICAL: Flush is_ready flag to ensure visibility across VMs */
+                clwb(&entry->is_ready, sizeof(entry->is_ready));
 
                 return true;
         }
@@ -134,8 +137,25 @@ class MPSCRingBuffer {
                 /* get the entry */
                 entry = reinterpret_cast<Entry *>(entries_buffer + cur_head * entry_struct_size);
 
-                /* wait for the entry to be ready */
-                while (entry->is_ready.load(std::memory_order_acquire) != 1);
+                /* CRITICAL: Invalidate cache to see updates from other VMs */
+                clflush(&entry->is_ready, sizeof(entry->is_ready));
+
+                /* wait for the entry to be ready with timeout to prevent deadlock */
+                uint64_t spin_count = 0;
+                const uint64_t max_spin = 100000000;  // ~1 second at typical CPU speed
+                while (entry->is_ready.load(std::memory_order_acquire) != 1) {
+                        spin_count++;
+                        if (spin_count % 10000 == 0) {
+                                /* Periodically re-invalidate cache in case of stale data */
+                                clflush(&entry->is_ready, sizeof(entry->is_ready));
+                        }
+                        if (spin_count > max_spin) {
+                                LOG(WARNING) << "MPSCRingBuffer::dequeue timeout waiting for is_ready, head=" << cur_head
+                                             << " is_ready=" << (int)entry->is_ready.load(std::memory_order_relaxed)
+                                             << " remaining_size=" << entry->remaining_size;
+                                return 0;  // Timeout - return 0 instead of spinning forever
+                        }
+                }
 
                 /* only dequeue part of the data if the buffer is not large enough */
                 if (buffer_size < entry->remaining_size)
@@ -156,8 +176,9 @@ class MPSCRingBuffer {
                         /* reset metadata */
                         entry->dequeue_offset = 0;
 
-                        /* mark it as not ready */
-                        entry->is_ready.store(0, std::memory_order_relaxed);
+                        /* mark it as not ready and flush to shared memory */
+                        entry->is_ready.store(0, std::memory_order_release);
+                        clwb(&entry->is_ready, sizeof(entry->is_ready));
 
                         /* increase head by 1 */
                         head.store((cur_head + 1) % entry_num, std::memory_order_release);
@@ -171,7 +192,20 @@ class MPSCRingBuffer {
 
         uint64_t send(char *data, uint64_t data_size)
         {
-                while (enqueue(data, data_size) != true);
+                uint64_t retry_count = 0;
+                const uint64_t max_retry = 100000000;  // ~1 second at typical CPU speed
+                while (enqueue(data, data_size) != true) {
+                        retry_count++;
+                        if (retry_count % 1000000 == 0) {
+                                LOG(WARNING) << "MPSCRingBuffer::send spinning, buffer may be full. retry=" << retry_count
+                                             << " count=" << count.load() << " size=" << size();
+                        }
+                        if (retry_count > max_retry) {
+                                LOG(ERROR) << "MPSCRingBuffer::send timeout - buffer full! count=" << count.load()
+                                           << " entry_num=" << entry_num << " size=" << size();
+                                return 0;  // Timeout instead of spinning forever
+                        }
+                }
                 return data_size;
         }
 

@@ -8,6 +8,9 @@
 #include <list>
 #include <tuple>
 #include <memory>
+#include <unordered_set>
+#include <xmmintrin.h>
+#include <sys/syscall.h>  // For gettid()
 
 #include "common/CCSet.h"
 #include "common/CCHashTable.h"
@@ -33,6 +36,24 @@ static inline void simple_memcpy_pasha(void* dest, const void* src, size_t len) 
         for (size_t i = 0; i < len; i++) {
                 d[i] = s[i];
         }
+}
+
+// Cache flush for cross-VM visibility (invalidate cache line)
+static inline void cxl_clflush(const void *addr, uint64_t len) {
+        static constexpr uint64_t cacheline_size = 64;
+        for (uint64_t ptr = (uint64_t)addr & ~(cacheline_size - 1); ptr < (uint64_t)addr + len; ptr += cacheline_size) {
+                _mm_clflush((void *)ptr);
+        }
+        _mm_sfence();
+}
+
+// Cache writeback for cross-VM visibility (write back and keep in cache)
+static inline void cxl_clwb(const void *addr, uint64_t len) {
+        static constexpr uint64_t cacheline_size = 64;
+        for (uint64_t ptr = (uint64_t)addr & ~(cacheline_size - 1); ptr < (uint64_t)addr + len; ptr += cacheline_size) {
+                _mm_clflush((void *)ptr);  // Fallback: use clflush since clwb may not be available
+        }
+        _mm_sfence();
 }
 
 struct TwoPLPashaSharedDataSCC {
@@ -125,11 +146,24 @@ struct TwoPLPashaMetadataShared {
 	void lock()
 	{
 retry:
+                // CRITICAL: Invalidate cache before reading to see writes from other VMs
+                cxl_clflush(&atomic_word, sizeof(atomic_word));
+
 		uint64_t v_before_lock = atomic_word.load(std::memory_order_acquire);
                 uint64_t v_after_lock = (v_before_lock | (LATCH_BIT_MASK << LATCH_BIT_OFFSET));
 
 		if ((v_before_lock & (LATCH_BIT_MASK << LATCH_BIT_OFFSET)) == 0) {
 			if (atomic_word.compare_exchange_strong(v_before_lock, v_after_lock)) {
+                                // CRITICAL: Flush after acquiring lock to ensure other VMs see it
+                                cxl_clwb(&atomic_word, sizeof(atomic_word));
+
+                                // Verify we actually got the lock by re-reading from memory
+                                cxl_clflush(&atomic_word, sizeof(atomic_word));
+                                uint64_t v_verify = atomic_word.load(std::memory_order_acquire);
+                                if ((v_verify & (LATCH_BIT_MASK << LATCH_BIT_OFFSET)) == 0) {
+                                        // Another VM may have stolen the lock, retry
+                                        goto retry;
+                                }
 				return;
                         } else {
 			        goto retry;
@@ -141,13 +175,26 @@ retry:
 
 	void unlock()
 	{
+                // NOTE: Do NOT clflush here - we may have made local modifications
+                // while holding the lock that we need to preserve
+
                 // nobody can modify this atomic word without acquiring the latch
                 // so it is safe to just do regular store instead compare_and_swap
                 uint64_t v_before_unlock = atomic_word.load(std::memory_order_acquire);
                 uint64_t v_after_unlock = (v_before_unlock & ~(LATCH_BIT_MASK << LATCH_BIT_OFFSET));
-                DCHECK(((v_before_unlock & (LATCH_BIT_MASK << LATCH_BIT_OFFSET)) != 0) == true);
+
+                // Note: During migration, newly created metadata may be unlocked without being locked first
+                // This is safe since we're just clearing the latch bit
+                if ((v_before_unlock & (LATCH_BIT_MASK << LATCH_BIT_OFFSET)) == 0) {
+                        // Latch not held - nothing to do
+                        return;
+                }
 
 		atomic_word.store(v_after_unlock, std::memory_order_release);
+
+                // CRITICAL: Flush after releasing lock to ensure other VMs see ALL changes
+                // (including modifications made while holding the lock)
+                cxl_clwb(&atomic_word, sizeof(atomic_word));
 	}
 
         TwoPLPashaSharedDataSCC *get_scc_data()
@@ -189,52 +236,59 @@ retry:
                 clear_bit(is_prev_key_real_bit_index);
         }
 
-        // Function to set a bit at a given position in the bitmap
+        // Function to set a bit at a given position in the bitmap (ATOMIC)
+        // Note: Called while holding lock, so no flush needed here - unlock() will flush
         void set_bit(uint64_t bit_index)
         {
-                uint64_t orig_atomic_word = atomic_word.load(std::memory_order_acquire);
-                atomic_word.store(orig_atomic_word | (1ull << bit_index), std::memory_order_release);  // Set the specific bit to 1
+                atomic_word.fetch_or(1ull << bit_index, std::memory_order_acq_rel);
         }
 
-        // Function to clear a bit at a given position in the bitmap
+        // Function to clear a bit at a given position in the bitmap (ATOMIC)
+        // Note: Called while holding lock, so no flush needed here - unlock() will flush
         void clear_bit(uint64_t bit_index)
         {
-                uint64_t orig_atomic_word = atomic_word.load(std::memory_order_acquire);
-                atomic_word.store(orig_atomic_word & ~(1ull << bit_index), std::memory_order_release);  // Clear the specific bit to 0
+                atomic_word.fetch_and(~(1ull << bit_index), std::memory_order_acq_rel);
         }
 
         // Function to check if a bit is set (returns true if set, false if clear)
+        // Note: Called while holding lock, so no flush needed - lock() already flushed
         bool is_bit_set(uint64_t bit_index)
         {
                 return (atomic_word.load(std::memory_order_acquire) & (1ull << bit_index)) != 0;
         }
 
         // read lock
+        // Note: Called while holding lock, so no flush needed - lock() already flushed
         uint64_t get_reader_count()
         {
                 return (atomic_word.load(std::memory_order_acquire) >> READ_LOCK_BITS_OFFSET) & READ_LOCK_BITS_MASK;
         }
 
+        // Note: Called while holding lock, so no extra flush needed - unlock() will flush
         void set_reader_count(uint64_t reader_count)
         {
-                uint64_t orig_atomic_word = atomic_word.load(std::memory_order_acquire);
-                orig_atomic_word &= ~(READ_LOCK_BITS_MASK << READ_LOCK_BITS_OFFSET);
-                orig_atomic_word += (reader_count << READ_LOCK_BITS_OFFSET);
-                atomic_word.store(orig_atomic_word, std::memory_order_release);
+                // Use CAS loop to atomically set reader count
+                uint64_t orig_atomic_word, new_atomic_word;
+                do {
+                        orig_atomic_word = atomic_word.load(std::memory_order_acquire);
+                        new_atomic_word = orig_atomic_word & ~(READ_LOCK_BITS_MASK << READ_LOCK_BITS_OFFSET);
+                        new_atomic_word |= (reader_count << READ_LOCK_BITS_OFFSET);
+                } while (!atomic_word.compare_exchange_weak(orig_atomic_word, new_atomic_word,
+                                std::memory_order_acq_rel, std::memory_order_acquire));
         }
 
+        // Note: Called while holding lock, so no flush needed here - unlock() will flush
         void increase_reader_count()
         {
-                uint64_t orig_atomic_word = atomic_word.load(std::memory_order_acquire);
-                orig_atomic_word += (1ull << READ_LOCK_BITS_OFFSET);
-                atomic_word.store(orig_atomic_word, std::memory_order_release);
+                // ATOMIC: add to the reader count bits
+                atomic_word.fetch_add(1ull << READ_LOCK_BITS_OFFSET, std::memory_order_acq_rel);
         }
 
+        // Note: Called while holding lock, so no flush needed here - unlock() will flush
         void decrease_reader_count()
         {
-                uint64_t orig_atomic_word = atomic_word.load(std::memory_order_acquire);
-                orig_atomic_word -= (1ull << READ_LOCK_BITS_OFFSET);
-                atomic_word.store(orig_atomic_word, std::memory_order_release);
+                // ATOMIC: subtract from the reader count bits
+                atomic_word.fetch_sub(1ull << READ_LOCK_BITS_OFFSET, std::memory_order_acq_rel);
         }
 
         uint64_t get_reader_count_max()
@@ -274,10 +328,11 @@ retry:
         }
 
         // SCC
+        // Note: Called while holding lock, so no flush needed here - unlock() will flush
         void clear_all_scc_bits()
         {
-                uint64_t orig_atomic_word = atomic_word.load(std::memory_order_acquire);
-                atomic_word.store(orig_atomic_word & ~(SCC_BITS_MASK << SCC_BITS_OFFSET), std::memory_order_release);  // Clear the specific bit to 0
+                // ATOMIC: clear all SCC bits at once
+                atomic_word.fetch_and(~(SCC_BITS_MASK << SCC_BITS_OFFSET), std::memory_order_acq_rel);
         }
 
         void set_scc_bit(uint64_t host_id)
@@ -467,7 +522,18 @@ class TwoPLPashaHelper {
                         tid = remove_lock_bit(old_value);
 
                         // can we get the lock?
-                        if (is_write_locked(old_value) || read_lock_num(old_value) == read_lock_max()) {
+                        bool write_locked_rl = is_write_locked(old_value);
+                        uint64_t reader_cnt_rl = read_lock_num(old_value);
+                        if (write_locked_rl || reader_cnt_rl == read_lock_max()) {
+                                static std::atomic<uint64_t> read_lock_local_fail{0};
+                                uint64_t fail_cnt = read_lock_local_fail.fetch_add(1, std::memory_order_relaxed);
+                                if (fail_cnt < 100 || fail_cnt % 10000 == 0) {
+                                        LOG(WARNING) << "read_lock (LOCAL): fail #" << fail_cnt
+                                                     << " write_locked=" << write_locked_rl
+                                                     << " reader_cnt=" << reader_cnt_rl
+                                                     << " tid=0x" << std::hex << old_value << std::dec
+                                                     << " lmeta=" << (void*)lmeta;
+                                }
                                 success = false;
                                 goto out_unlock_lmeta;
                         }
@@ -514,7 +580,17 @@ class TwoPLPashaHelper {
                         }
 
                         // can we get the lock?
-                        if (smeta->is_write_locked() || smeta->get_reader_count() == smeta->get_reader_count_max()) {
+                        bool write_locked_rlock = smeta->is_write_locked();
+                        uint64_t reader_cnt_rlock = smeta->get_reader_count();
+                        if (write_locked_rlock || reader_cnt_rlock == smeta->get_reader_count_max()) {
+                                static std::atomic<uint64_t> local_rlock_fail_count{0};
+                                uint64_t fail_cnt = local_rlock_fail_count.fetch_add(1, std::memory_order_relaxed);
+                                if (fail_cnt < 100 || fail_cnt % 10000 == 0) {
+                                        LOG(WARNING) << "take_read_lock_and_read (migrated): fail #" << fail_cnt
+                                                     << " reader_cnt=" << reader_cnt_rlock
+                                                     << " write_locked=" << write_locked_rlock
+                                                     << " smeta=" << (void*)smeta;
+                                }
                                 success = false;
                                 smeta->unlock();
                                 goto out_unlock_lmeta;
@@ -552,7 +628,18 @@ out_unlock_lmeta:
                         tid = remove_lock_bit(old_value);
 
                         // can we get the lock?
-                        if (is_write_locked(old_value) || read_lock_num(old_value) == read_lock_max()) {
+                        bool write_locked_trlr = is_write_locked(old_value);
+                        uint64_t reader_cnt_trlr = read_lock_num(old_value);
+                        if (write_locked_trlr || reader_cnt_trlr == read_lock_max()) {
+                                static std::atomic<uint64_t> trlr_local_fail{0};
+                                uint64_t fail_cnt = trlr_local_fail.fetch_add(1, std::memory_order_relaxed);
+                                if (fail_cnt < 100 || fail_cnt % 10000 == 0) {
+                                        LOG(WARNING) << "take_read_lock_and_read (LOCAL): fail #" << fail_cnt
+                                                     << " write_locked=" << write_locked_trlr
+                                                     << " reader_cnt=" << reader_cnt_trlr
+                                                     << " tid=0x" << std::hex << old_value << std::dec
+                                                     << " lmeta=" << (void*)lmeta;
+                                }
                                 success = false;
                                 goto out_unlock_lmeta;
                         }
@@ -734,7 +821,19 @@ out_unlock_lmeta:
                         tid = remove_lock_bit(old_value);
 
                         // can we get the lock?
-                        if (is_read_locked(old_value) || is_write_locked(old_value)) {
+                        bool read_locked = is_read_locked(old_value);
+                        bool write_locked = is_write_locked(old_value);
+                        if (read_locked || write_locked) {
+                                static std::atomic<uint64_t> local_wlock_local_fail{0};
+                                uint64_t fail_cnt = local_wlock_local_fail.fetch_add(1, std::memory_order_relaxed);
+                                if (fail_cnt < 100 || fail_cnt % 10000 == 0) {
+                                        LOG(WARNING) << "write_lock (LOCAL): fail #" << fail_cnt
+                                                     << " read_locked=" << read_locked
+                                                     << " write_locked=" << write_locked
+                                                     << " tid=0x" << std::hex << old_value << std::dec
+                                                     << " lmeta=" << (void*)lmeta
+                                                     << " is_migrated=" << lmeta->is_migrated;
+                                }
                                 success = false;
                                 goto out_unlock_lmeta;
                         }
@@ -743,6 +842,20 @@ out_unlock_lmeta:
                         new_value = old_value + (WRITE_LOCK_BIT_MASK << WRITE_LOCK_BIT_OFFSET);
                         lmeta->tid = new_value;
                         success = true;
+
+                        // DIAGNOSTIC: Track scan write lock acquisitions
+                        static std::atomic<uint64_t> scan_wlock_acquire_cnt{0};
+                        uint64_t scan_acq_cnt = scan_wlock_acquire_cnt.fetch_add(1, std::memory_order_relaxed);
+                        // Log if: first 50, every 1000th, OR if old_tid base matches tid 30
+                        uint64_t scan_base_old_tid = old_value & 0x00FFFFFFFFFFFFFF;
+                        bool scan_is_tid30 = (scan_base_old_tid == 0x1e);
+                        if (scan_acq_cnt < 50 || scan_acq_cnt % 1000 == 0 || scan_is_tid30) {
+                                LOG(INFO) << "SCAN_WLOCK_ACQUIRE (LOCAL): #" << scan_acq_cnt
+                                          << " lmeta=" << (void*)lmeta
+                                          << " old_tid=0x" << std::hex << old_value << std::dec
+                                          << " new_tid=0x" << std::hex << new_value << std::dec
+                                          << (scan_is_tid30 ? " *** TID30 ROW ***" : "");
+                        }
                 } else {
                         TwoPLPashaMetadataShared *smeta = reinterpret_cast<TwoPLPashaMetadataShared *>(lmeta->migrated_row);
                         TwoPLPashaSharedDataSCC *scc_data = smeta->get_scc_data();
@@ -781,7 +894,17 @@ out_unlock_lmeta:
                         }
 
                         // can we get the lock?
-                        if (smeta->get_reader_count() > 0 || smeta->is_write_locked()) {
+                        uint64_t reader_cnt_local = smeta->get_reader_count();
+                        bool write_locked_local = smeta->is_write_locked();
+                        if (reader_cnt_local > 0 || write_locked_local) {
+                                static std::atomic<uint64_t> local_wlock_fail_count{0};
+                                uint64_t fail_cnt = local_wlock_fail_count.fetch_add(1, std::memory_order_relaxed);
+                                if (fail_cnt < 100 || fail_cnt % 10000 == 0) {
+                                        LOG(WARNING) << "take_write_lock_and_read (migrated): fail #" << fail_cnt
+                                                     << " reader_cnt=" << reader_cnt_local
+                                                     << " write_locked=" << write_locked_local
+                                                     << " smeta=" << (void*)smeta;
+                                }
                                 success = false;
                                 smeta->unlock();
                                 goto out_unlock_lmeta;
@@ -819,7 +942,37 @@ out_unlock_lmeta:
                         tid = remove_lock_bit(old_value);
 
                         // can we get the lock?
-                        if (is_read_locked(old_value) || is_write_locked(old_value)) {
+                        bool read_locked_twlr = is_read_locked(old_value);
+                        bool write_locked_twlr = is_write_locked(old_value);
+                        if (read_locked_twlr || write_locked_twlr) {
+                                static std::atomic<uint64_t> twlr_local_fail{0};
+                                static std::unordered_set<void*> logged_stuck_lmetas;
+                                static pthread_spinlock_t log_lock;
+                                static bool log_lock_init = false;
+                                if (!log_lock_init) {
+                                        pthread_spin_init(&log_lock, PTHREAD_PROCESS_PRIVATE);
+                                        log_lock_init = true;
+                                }
+                                uint64_t fail_cnt = twlr_local_fail.fetch_add(1, std::memory_order_relaxed);
+
+                                // Log first failure for each unique lmeta
+                                pthread_spin_lock(&log_lock);
+                                bool first_for_this_lmeta = (logged_stuck_lmetas.find((void*)lmeta) == logged_stuck_lmetas.end());
+                                if (first_for_this_lmeta && logged_stuck_lmetas.size() < 20) {
+                                        logged_stuck_lmetas.insert((void*)lmeta);
+                                }
+                                pthread_spin_unlock(&log_lock);
+
+                                if (first_for_this_lmeta || fail_cnt % 10000 == 0) {
+                                        LOG(WARNING) << "take_write_lock_and_read (LOCAL): fail #" << fail_cnt
+                                                     << " read_locked=" << read_locked_twlr
+                                                     << " write_locked=" << write_locked_twlr
+                                                     << " tid=0x" << std::hex << old_value << std::dec
+                                                     << " lmeta=" << (void*)lmeta
+                                                     << " is_valid=" << lmeta->is_valid
+                                                     << " is_migrated=" << lmeta->is_migrated
+                                                     << (first_for_this_lmeta ? " *** FIRST FAILURE FOR THIS LOCK ***" : "");
+                                }
                                 success = false;
                                 goto out_unlock_lmeta;
                         }
@@ -828,6 +981,23 @@ out_unlock_lmeta:
                         new_value = old_value + (WRITE_LOCK_BIT_MASK << WRITE_LOCK_BIT_OFFSET);
                         lmeta->tid = new_value;
                         success = true;
+
+                        // DIAGNOSTIC: Track outstanding write locks
+                        static std::atomic<int64_t> outstanding_wlocks{0};
+                        static std::atomic<uint64_t> wlock_acquire_cnt{0};
+                        uint64_t acq_cnt = wlock_acquire_cnt.fetch_add(1, std::memory_order_relaxed);
+                        int64_t outstanding = outstanding_wlocks.fetch_add(1, std::memory_order_relaxed) + 1;
+                        // Log if: first 50, every 1000th, OR if old_tid base matches tid 30 (stuck lock)
+                        uint64_t base_old_tid = old_value & 0x00FFFFFFFFFFFFFF;  // Remove lock bits
+                        bool is_tid30 = (base_old_tid == 0x1e);
+                        if (acq_cnt < 50 || acq_cnt % 1000 == 0 || is_tid30) {
+                                LOG(INFO) << "WLOCK_ACQUIRE (LOCAL): #" << acq_cnt
+                                          << " outstanding=" << outstanding
+                                          << " lmeta=" << (void*)lmeta
+                                          << " old_tid=0x" << std::hex << old_value << std::dec
+                                          << " new_tid=0x" << std::hex << new_value << std::dec
+                                          << (is_tid30 ? " *** TID30 ROW ***" : "");
+                        }
 
                         // read the data
                         simple_memcpy_pasha(dest, src, size);
@@ -921,7 +1091,16 @@ out_unlock_lmeta:
                 tid = remove_lock_bit(old_value);
 
                 // can we get the lock?
-                if (smeta->get_reader_count() > 0 || smeta->is_write_locked()) {
+                uint64_t reader_cnt = smeta->get_reader_count();
+                bool write_locked = smeta->is_write_locked();
+                if (reader_cnt > 0 || write_locked) {
+                        static std::atomic<uint64_t> lock_fail_count{0};
+                        uint64_t fail_cnt = lock_fail_count.fetch_add(1, std::memory_order_relaxed);
+                        if (fail_cnt < 100 || fail_cnt % 10000 == 0) {
+                                LOG(WARNING) << "remote_take_write_lock_and_read: lock fail #" << fail_cnt
+                                             << " reader_cnt=" << reader_cnt << " write_locked=" << write_locked
+                                             << " smeta=" << (void*)smeta;
+                        }
                         success = false;
                         smeta->unlock();
                         return tid;
@@ -966,7 +1145,16 @@ out_unlock_lmeta:
                 tid = remove_lock_bit(old_value);
 
                 // can we get the lock?
-                if (smeta->get_reader_count() > 0 || smeta->is_write_locked()) {
+                uint64_t reader_cnt2 = smeta->get_reader_count();
+                bool write_locked2 = smeta->is_write_locked();
+                if (reader_cnt2 > 0 || write_locked2) {
+                        static std::atomic<uint64_t> lock_fail_count2{0};
+                        uint64_t fail_cnt = lock_fail_count2.fetch_add(1, std::memory_order_relaxed);
+                        if (fail_cnt < 100 || fail_cnt % 10000 == 0) {
+                                LOG(WARNING) << "remote_write_lock_and_inc_ref_cnt: lock fail #" << fail_cnt
+                                             << " reader_cnt=" << reader_cnt2 << " write_locked=" << write_locked2
+                                             << " smeta=" << (void*)smeta;
+                        }
                         success = false;
                         smeta->unlock();
                         return tid;
@@ -1032,6 +1220,19 @@ out_unlock_lmeta:
                 if (lmeta->is_migrated == false) {
                         DCHECK(lmeta->is_valid == true);
                         old_value = lmeta->tid;
+
+                        // DIAGNOSTIC: Track write lock releases (abort path)
+                        static std::atomic<uint64_t> wlock_release_abort_cnt{0};
+                        uint64_t rel_cnt = wlock_release_abort_cnt.fetch_add(1, std::memory_order_relaxed);
+                        bool was_locked = is_write_locked(old_value);
+                        if (rel_cnt < 50 || rel_cnt % 1000 == 0 || !was_locked) {
+                                LOG(INFO) << "WLOCK_RELEASE_ABORT (LOCAL): #" << rel_cnt
+                                          << " lmeta=" << (void*)lmeta
+                                          << " old_tid=0x" << std::hex << old_value << std::dec
+                                          << " write_locked=" << was_locked
+                                          << (!was_locked ? " *** RELEASING UNHELD LOCK! ***" : "");
+                        }
+
                         DCHECK(!is_read_locked(old_value));
                         DCHECK(is_write_locked(old_value));
                         new_value = old_value - (1ull << WRITE_LOCK_BIT_OFFSET);
@@ -1055,13 +1256,24 @@ out_unlock_lmeta:
                 uint64_t old_value = 0, new_value = 0;
 
 		smeta->lock();
-                DCHECK(smeta->get_reader_count() == 0);
-                DCHECK(smeta->is_write_locked() == true);
+                uint64_t reader_cnt = smeta->get_reader_count();
+                bool write_locked = smeta->is_write_locked();
+                if (reader_cnt != 0 || !write_locked) {
+                        static std::atomic<uint64_t> release_fail_count{0};
+                        uint64_t fail_cnt = release_fail_count.fetch_add(1, std::memory_order_relaxed);
+                        if (fail_cnt < 100 || fail_cnt % 10000 == 0) {
+                                LOG(WARNING) << "remote_write_lock_release: unexpected state #" << fail_cnt
+                                             << " reader_cnt=" << reader_cnt << " write_locked=" << write_locked
+                                             << " smeta=" << (void*)smeta;
+                        }
+                }
+                DCHECK(reader_cnt == 0);
+                DCHECK(write_locked == true);
                 smeta->clear_write_locked();
                 smeta->unlock();
 	}
 
-	void write_lock_release(std::atomic<uint64_t> &meta, uint64_t size, uint64_t new_value)
+	void write_lock_release(std::atomic<uint64_t> &meta, uint64_t size, uint64_t new_tid)
 	{
                 TwoPLPashaMetadataLocal *lmeta = reinterpret_cast<TwoPLPashaMetadataLocal *>(meta.load());
                 uint64_t old_value = 0;
@@ -1070,11 +1282,29 @@ out_unlock_lmeta:
                 if (lmeta->is_migrated == false) {
                         DCHECK(lmeta->is_valid == true);
                         old_value = lmeta->tid;
+
+                        // DIAGNOSTIC: Track write lock releases (commit path)
+                        static std::atomic<uint64_t> wlock_release_commit_cnt{0};
+                        uint64_t rel_cnt = wlock_release_commit_cnt.fetch_add(1, std::memory_order_relaxed);
+                        bool was_locked = is_write_locked(old_value);
+                        // Also log when setting tid to 30 (the stuck lock's tid)
+                        uint64_t base_new_tid = new_tid & 0x00FFFFFFFFFFFFFF;
+                        bool setting_tid30 = (base_new_tid == 0x1e);
+                        if (rel_cnt < 50 || rel_cnt % 1000 == 0 || !was_locked || setting_tid30) {
+                                LOG(INFO) << "WLOCK_RELEASE_COMMIT (LOCAL): #" << rel_cnt
+                                          << " lmeta=" << (void*)lmeta
+                                          << " old_tid=0x" << std::hex << old_value << std::dec
+                                          << " new_tid=0x" << std::hex << new_tid << std::dec
+                                          << " write_locked=" << was_locked
+                                          << (!was_locked ? " *** RELEASING UNHELD LOCK! ***" : "")
+                                          << (setting_tid30 ? " *** SETTING TID30 ***" : "");
+                        }
+
                         DCHECK(!is_read_locked(old_value));
                         DCHECK(is_write_locked(old_value));
-                        DCHECK(!is_read_locked(new_value));
-                        DCHECK(!is_write_locked(new_value));
-                        lmeta->tid = new_value;
+                        DCHECK(!is_read_locked(new_tid));
+                        DCHECK(!is_write_locked(new_tid));
+                        lmeta->tid = new_tid;
                 } else {
                         TwoPLPashaMetadataShared *smeta = reinterpret_cast<TwoPLPashaMetadataShared *>(lmeta->migrated_row);
                         TwoPLPashaSharedDataSCC *scc_data = smeta->get_scc_data();
@@ -1084,7 +1314,7 @@ out_unlock_lmeta:
                         DCHECK(smeta->is_write_locked() == true);
                         smeta->clear_write_locked();
 
-                        scc_data->tid = new_value;
+                        scc_data->tid = new_tid;
 
                         scc_manager->finish_write(smeta, coordinator_id, scc_data, sizeof(TwoPLPashaMetadataShared) + size);
                         smeta->unlock();

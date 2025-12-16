@@ -4,6 +4,7 @@ set -uo pipefail
 
 # set -x
 
+
 # Disable AVX/AVX2 in glibc to avoid SIGILL on CPUs without AVX support
 export GLIBC_TUNABLES=glibc.cpu.hwcaps=-AVX_Usable,-AVX2_Usable,-AVX512F_Usable
 

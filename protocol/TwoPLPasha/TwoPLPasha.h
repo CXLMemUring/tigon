@@ -135,6 +135,21 @@ template <class Database> class TwoPLPasha {
                                                 auto cached_row = readKey.get_cached_local_row();
                                                 DCHECK(std::get<0>(cached_row) != nullptr && std::get<1>(cached_row) != nullptr);
 
+                                                // DIAGNOSTIC: Log which row we're about to release in abort (phantom detection path)
+                                                {
+                                                        std::atomic<uint64_t> *meta_ptr = std::get<0>(cached_row);
+                                                        TwoPLPashaMetadataLocal *lmeta = reinterpret_cast<TwoPLPashaMetadataLocal *>(meta_ptr->load());
+                                                        static std::atomic<uint64_t> abort_wlock_release_phantom_log_cnt{0};
+                                                        uint64_t log_cnt = abort_wlock_release_phantom_log_cnt.fetch_add(1, std::memory_order_relaxed);
+                                                        if (log_cnt < 50 || log_cnt % 1000 == 0) {
+                                                                LOG(INFO) << "ABORT_WLOCK_RELEASE_PHANTOM_PREP: #" << log_cnt
+                                                                          << " readSet[" << i << "]"
+                                                                          << " meta_ptr=" << (void*)meta_ptr
+                                                                          << " lmeta=" << (void*)lmeta
+                                                                          << " tid=0x" << std::hex << lmeta->tid << std::dec;
+                                                        }
+                                                }
+
                                                 // model CXL search overhead
                                                 if (this->context.model_cxl_search_overhead == true) {
                                                         twopl_pasha_global_helper->model_cxl_search_overhead(cached_row, tableId, partitionId, readKey.get_key());
