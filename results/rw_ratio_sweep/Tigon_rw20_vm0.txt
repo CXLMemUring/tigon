@@ -1,0 +1,193 @@
+I20260307 04:15:50.713258  4482 bench_ycsb.cpp:66] RW_RATIO = 20, ZIPF_THETA = 0.7, CROSS_RATIO = 50
+I20260307 04:15:50.713308  4482 bench_ycsb.cpp:67] checkpoint 0 to 
+I20260307 04:15:50.713310  4482 bench_ycsb.cpp:68] cross_part_num 2
+I20260307 04:15:50.713311  4482 bench_ycsb.cpp:69] lotus_sp_parallel_exec_commit 0
+I20260307 04:15:50.713313  4482 bench_ycsb.cpp:70] granules_per_partition 2000
+I20260307 04:15:50.713315  4482 bench_ycsb.cpp:71] keysPerGranule 100
+I20260307 04:15:51.222450  4482 Database.h:81] ycsb initialization finished in 506 milliseconds.
+I20260307 04:15:51.227264  4482 CXLMemory.h:185] Shared CXL memory FIXED at 0x500000000000 (size=262144000 bytes)
+I20260307 04:15:51.227295  4482 CXLMemory.h:216] Bump allocator CREATED in shared memory: heap_start=4096 heap_size=262139904 offset_ptr=0x500000000ff0
+I20260307 04:15:51.227303  4482 CXLMemory.h:229] Shared bump allocator initialized (cross-process safe)
+I20260307 04:15:51.227305  4482 CXLMemory.h:231] Custom allocator ready for thread 0 (replaces cxlalloc) (global ID = 0) on host 0
+I20260307 04:15:51.227321  4482 CXLMemory.h:297] Bump alloc: size=112 base=0x500000000000 offset=4096 ptr=0x500000001000
+I20260307 04:15:51.227375  4482 MPSCRingBuffer.h:52] entry_struct_size: 8192 entry_num: 128
+I20260307 04:15:51.227396  4482 CXLMemory.h:297] Bump alloc: size=1048576 base=0x500000000000 offset=4208 ptr=0x500000001070
+I20260307 04:16:00.258285  4482 MPSCRingBuffer.h:52] entry_struct_size: 8192 entry_num: 128
+I20260307 04:16:00.258356  4482 CXLMemory.h:297] Bump alloc: size=1048576 base=0x500000000000 offset=1052784 ptr=0x500000101070
+I20260307 04:16:09.157271  4482 CXLMemory.h:501] CXL: Wrote offset 4096 to shared metadata[0]
+I20260307 04:16:09.157326  4482 Coordinator.h:422] Coordinator 0 initializes CXL transport metadata (2 ringbuffers each with 128 entries (each 8183 Bytes)
+I20260307 04:16:09.157370  4482 CXLMemory.h:297] Bump alloc: size=344 base=0x500000000000 offset=2101360 ptr=0x500000201070
+I20260307 04:16:09.157747  4482 CXLMemory.h:501] CXL: Wrote offset 2101360 to shared metadata[4]
+I20260307 04:16:09.157754  4482 Coordinator.h:459] created global CXL EBR metadata
+I20260307 04:16:09.157824  4482 Coordinator.h:97] WAL Group Commiting off. Log to file _non_group_commit.txt using Blackhole Logger
+I20260307 04:16:09.157827  4482 Coordinator.h:101] Coordinator initializes 1 workers.
+I20260307 04:16:09.157907  4482 CXLMemory.h:297] Bump alloc: size=16 base=0x500000000000 offset=2101712 ptr=0x5000002011d0
+I20260307 04:16:09.157929  4482 CXLMemory.h:297] Bump alloc: size=464 base=0x500000000000 offset=2101728 ptr=0x5000002011e0
+I20260307 04:16:09.157992  4482 CXLMemory.h:297] Bump alloc: size=4096 base=0x500000000000 offset=2102192 ptr=0x5000002013b0
+I20260307 04:16:09.161062  4482 CXLMemory.h:297] Bump alloc: size=4096 base=0x500000000000 offset=2106288 ptr=0x5000002023b0
+I20260307 04:16:09.164065  4482 CXLMemory.h:501] CXL: Wrote offset 2101712 to shared metadata[1]
+I20260307 04:16:09.164075  4482 Database.h:227] YCSB initializes data migration metadata
+I20260307 04:16:09.164088  4482 TwoPLPashaExecutor.h:52] total hardware budget = 104857600 per host = 51904512
+I20260307 04:16:09.164268  4672 Coordinator.h:500] Listener 0 on coordinator 0 listening on 192.168.100.11:1234 tcp_no_delay 1 tcp_quick_ack 0
+I20260307 04:16:09.164549  4482 Coordinator.h:546] Coordinator 0 failed to connect 1(192.168.100.10:1234)'s listener 0, retry in 5 seconds.
+I20260307 04:16:10.722608  4672 Socket.h:69] Disabling nagle
+I20260307 04:16:10.722659  4672 Coordinator.h:515] Listener accepted connection from coordinator 1
+I20260307 04:16:10.722662  4672 Coordinator.h:518] Listener 0 on coordinator 0 exits.
+I20260307 04:16:14.164973  4482 Socket.h:69] Disabling nagle
+I20260307 04:16:14.165026  4482 Coordinator.h:555] Coordinator 0 connected to 1
+I20260307 04:16:14.165050  4482 Coordinator.h:567] Coordinator 0 connected to all peers.
+I20260307 04:16:14.165058  4482 Dispatcher.h:38] IncomingDispatcher 0 coord_id 0
+I20260307 04:16:14.165097  4482 Dispatcher.h:210] OutgoingDispatcher 0 coord_id 0
+I20260307 04:16:14.165144  4482 Coordinator.h:664] pinned thread to core 0
+I20260307 04:16:14.165184  4482 Coordinator.h:664] pinned thread to core 1
+I20260307 04:16:14.165190  4482 Coordinator.h:216] Coordinator starts to run 2 workers.
+I20260307 04:16:14.165242  4482 Coordinator.h:664] pinned thread to core 2
+I20260307 04:16:14.165215  4685 Dispatcher.h:222] Outgoing Dispatcher started, numCoordinators = 2, numWorkers = 2, group id = 0
+I20260307 04:16:14.165275  4684 Dispatcher.h:57] Incoming Dispatcher started, numCoordinators = 2, numWorkers = 1, group id = 0, coordinator = 0
+I20260307 04:16:14.165279  4686 Executor.h:79] Executor 0 starts.
+I20260307 04:16:14.165369  4686 CXLMemory.h:231] Custom allocator ready for thread 1 (replaces cxlalloc) (global ID = 1) on host 0
+I20260307 04:16:14.165330  4687 Manager.h:228] Manager(worker id = 1) on the coordinator node started.
+I20260307 04:16:14.165509  4686 CXL_EBR.h:84] init local EBR metadata, coordinator_id = 0 thread_id = 0
+I20260307 04:16:14.165894  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #0 outstanding=1 lmeta=0x79795e676c20 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.165910  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #1 outstanding=2 lmeta=0x79795eb532c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.165915  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #2 outstanding=3 lmeta=0x797953934840 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.165921  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #3 outstanding=4 lmeta=0x79795b720ef0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.165925  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #4 outstanding=5 lmeta=0x79795ea06c90 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.165927  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #5 outstanding=6 lmeta=0x79795ead7110 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.165931  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #6 outstanding=7 lmeta=0x79795e82d2b0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.165935  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #7 outstanding=8 lmeta=0x79795356b110 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.165937  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #8 outstanding=9 lmeta=0x79795ea07230 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166002  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #0 lmeta=0x79795ea07230 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166003  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #1 lmeta=0x79795356b110 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166005  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #2 lmeta=0x79795e82d2b0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166007  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #3 lmeta=0x79795ead7110 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166009  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #4 lmeta=0x79795ea06c90 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166011  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #5 lmeta=0x79795b720ef0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166013  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #6 lmeta=0x797953934840 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166015  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #7 lmeta=0x79795eb532c0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166018  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #8 lmeta=0x79795e676c20 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166074  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #9 outstanding=10 lmeta=0x79795c522100 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166085  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #10 outstanding=11 lmeta=0x7979589c6f70 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166097  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #11 outstanding=12 lmeta=0x79795d70f360 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166101  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #12 outstanding=13 lmeta=0x79795cbb6050 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166105  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #13 outstanding=14 lmeta=0x79795ea3bc90 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166108  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #14 outstanding=15 lmeta=0x79795e5ed280 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166110  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #15 outstanding=16 lmeta=0x79795ea06060 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166113  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #16 outstanding=17 lmeta=0x79795eb52030 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166116  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #17 outstanding=18 lmeta=0x79795e987170 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166119  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #18 outstanding=19 lmeta=0x79795ea06d50 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166164  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #9 lmeta=0x79795ea06d50 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166167  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #10 lmeta=0x79795e987170 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166168  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #11 lmeta=0x79795eb52030 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166170  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #12 lmeta=0x79795ea06060 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166172  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #13 lmeta=0x79795e5ed280 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166174  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #14 lmeta=0x79795ea3bc90 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166177  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #15 lmeta=0x79795cbb6050 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166178  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #16 lmeta=0x79795d70f360 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166180  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #17 lmeta=0x7979589c6f70 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166182  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #18 lmeta=0x79795c522100 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.166399  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #19 outstanding=20 lmeta=0x79795ead6690 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166577  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #20 outstanding=21 lmeta=0x7979593641e0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.166676  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #21 outstanding=22 lmeta=0x79795ea071d0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.171530  4686 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2111456 ptr=0x5000002037e0
+I20260307 04:16:14.171555  4686 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2111472 ptr=0x5000002037f0
+I20260307 04:16:14.181034  4686 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2113600 ptr=0x500000204040
+I20260307 04:16:14.181066  4686 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2113616 ptr=0x500000204050
+I20260307 04:16:14.190939  4686 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2114672 ptr=0x500000204470
+I20260307 04:16:14.190972  4686 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2114688 ptr=0x500000204480
+I20260307 04:16:14.201701  4686 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2116832 ptr=0x500000204ce0
+I20260307 04:16:14.201723  4686 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2117888 ptr=0x500000205100
+W20260307 04:16:14.212286  4686 TwoPLPashaSCCWriteThrough.h:67] finish_write: SCC bit not set for host 0 (may be during migration)
+I20260307 04:16:14.212532  4686 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2120016 ptr=0x500000205950
+I20260307 04:16:14.212563  4686 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2120032 ptr=0x500000205960
+W20260307 04:16:14.278010  4686 TwoPLPasha.h:594] Replication not supported in TwoPLPasha, skipping remote write
+I20260307 04:16:14.298377  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #19 lmeta=0x79795ea071d0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.298506  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #20 lmeta=0x7979593641e0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.298724  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #21 lmeta=0x79795ead6690 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.300686  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #22 outstanding=23 lmeta=0x797952b76dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.300699  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #23 outstanding=24 lmeta=0x79795d2d1cc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.300704  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #24 outstanding=25 lmeta=0x7979597378f0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.300706  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #25 outstanding=26 lmeta=0x79795e904650 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.300709  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #26 outstanding=27 lmeta=0x79795eb53fb0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.300712  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #27 outstanding=28 lmeta=0x79795d069d50 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.300719  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #28 outstanding=29 lmeta=0x7979545e4110 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.300763  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #22 lmeta=0x7979545e4110 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.300765  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #23 lmeta=0x79795d069d50 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.300766  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #24 lmeta=0x79795eb53fb0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.300768  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #25 lmeta=0x79795e904650 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.300769  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #26 lmeta=0x7979597378f0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.300770  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #27 lmeta=0x79795d2d1cc0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.300772  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #28 lmeta=0x797952b76dc0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.301051  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #29 outstanding=30 lmeta=0x79795db92ad0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.301169  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #30 outstanding=31 lmeta=0x79795eb9f2c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.301275  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #31 outstanding=32 lmeta=0x797958c271c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.301404  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #32 outstanding=33 lmeta=0x79795ea066f0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.450387  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #29 lmeta=0x79795ea066f0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.450778  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #30 lmeta=0x797958c271c0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.451115  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #31 lmeta=0x79795eb9f2c0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.451474  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #32 lmeta=0x79795db92ad0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.453367  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #33 outstanding=34 lmeta=0x79795d5419b0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.453536  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #34 outstanding=35 lmeta=0x79795815a8e0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.453696  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #35 outstanding=36 lmeta=0x79795b3b7270 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.453804  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #36 outstanding=37 lmeta=0x79795eaa2860 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.453954  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #37 outstanding=38 lmeta=0x79795ea07170 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.614696  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #33 lmeta=0x79795ea07170 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.615073  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #34 lmeta=0x79795eaa2860 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.615208  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #35 lmeta=0x79795b3b7270 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.615535  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #36 lmeta=0x79795815a8e0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.615880  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #37 lmeta=0x79795d5419b0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.617785  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #38 outstanding=39 lmeta=0x79795b953fe0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.617986  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #39 outstanding=40 lmeta=0x797957d9d590 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.618142  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #40 outstanding=41 lmeta=0x797953b4fa10 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.618275  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #41 outstanding=42 lmeta=0x79795da866d0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.618420  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #42 outstanding=43 lmeta=0x79795ea06de0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.754375  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #38 lmeta=0x79795ea06de0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.754745  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #39 lmeta=0x79795da866d0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.755082  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #40 lmeta=0x797953b4fa10 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.755422  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #41 lmeta=0x797957d9d590 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.755551  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #42 lmeta=0x79795b953fe0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.757205  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #43 outstanding=44 lmeta=0x79795eb9fa40 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.757220  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #44 outstanding=45 lmeta=0x797957a19c00 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.757223  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #45 outstanding=46 lmeta=0x79795470b370 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.757226  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #46 outstanding=47 lmeta=0x79795eb53800 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.757229  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #47 outstanding=48 lmeta=0x79795d81e310 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.757231  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #48 outstanding=49 lmeta=0x79795cde9890 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.757234  4686 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #49 outstanding=50 lmeta=0x79795a253ec0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.757268  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #43 lmeta=0x79795ea06a20 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.757270  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #44 lmeta=0x79795a253ec0 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.757272  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #45 lmeta=0x79795cde9890 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.757273  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #46 lmeta=0x79795d81e310 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.757274  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #47 lmeta=0x79795eb53800 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.757275  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #48 lmeta=0x79795470b370 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:14.757277  4686 TwoPLPashaHelper.h:1294] WLOCK_RELEASE_COMMIT (LOCAL): #49 lmeta=0x797957a19c00 old_tid=0x8000000000000000 new_tid=0x1 write_locked=1
+I20260307 04:16:15.165390  4482 Coordinator.h:307] commit: 14 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 720, avg network size: 51.4286, si_in_serializable: 0 0 %, local: 0 %, local_access: 115, local_cxl_access: 0 (0%), remote_access: 35, remote_access_with_req: 35 (100%), data_move_in: 5, data_move_out: 0
+I20260307 04:16:16.165545  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:17.165710  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:18.165874  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:19.166074  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:20.166247  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:21.166395  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:22.166560  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:23.166738  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:24.166889  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:25.167063  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:26.167248  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:27.167399  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:28.167567  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:29.167711  4482 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:29.167770  4482 Coordinator.h:345] average commit: 0 abort: 0 (0/0/0), abort_rate: -nan, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:29.167783  4482 Executor.h:233] Worker 0 latency: 0 us (50%) 0 us (75%) 0 us (95%) 0 us (99%). dist txn latency: 0 us (50%) 0 us (75%) 0 us (95%) 0 us (99%)  avg 0 us . local txn latency: 0 us (50%) 0 us (75%) 0 us (95%) 0 us (99%)  avg 0 us. txn commit latency: 0 us (50%) 0 us (75%) 0 us (95%) 0 us (99%) avg 0 us.
+ LOCAL txn stall 0 us,  local_work 0 us,  remote_work 0 us,  commit_work 0 us,  commit_prepare 0 us,  commit_persistence 0 us,  commit_write_back 0 us,  commit_replication 0 us,  commit_release_lock 0 us 
+ DIST txn stall 0 us,  local_work 0 us,  remote_work 0 us,  commit_work 0 us,  commit_prepare 0 us,  commit_persistence 0 us,  commit_write_back 0 us,  commit_replication 0 us,  commit_release_lock 0 us 
+I20260307 04:16:29.167789  4482 Executor.h:264] message stats, type: 0 count: 0 total size: 0
+I20260307 04:16:29.167791  4482 Executor.h:264] message stats, type: 1 count: 0 total size: 0
+I20260307 04:16:29.167793  4482 Executor.h:264] message stats, type: 2 count: 0 total size: 0
+I20260307 04:16:29.167793  4482 Executor.h:264] message stats, type: 3 count: 0 total size: 0
+I20260307 04:16:29.167795  4482 Executor.h:264] message stats, type: 4 count: 15 total size: 360
+I20260307 04:16:29.167796  4482 Executor.h:264] message stats, type: 5 count: 30 total size: 390
+I20260307 04:16:29.167797  4482 Executor.h:264] message stats, type: 6 count: 0 total size: 0
+I20260307 04:16:29.167799  4482 Executor.h:264] message stats, type: 7 count: 0 total size: 0
+I20260307 04:16:29.167800  4482 Executor.h:264] message stats, type: 8 count: 0 total size: 0
+I20260307 04:16:29.167801  4482 Executor.h:264] message stats, type: 9 count: 0 total size: 0
+I20260307 04:16:29.167804  4482 Executor.h:264] message stats, type: 10 count: 0 total size: 0
+I20260307 04:16:29.167804  4482 Executor.h:264] message stats, type: 11 count: 0 total size: 0

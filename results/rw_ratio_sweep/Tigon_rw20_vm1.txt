@@ -1,0 +1,257 @@
+I20260307 04:16:09.472977  1749 bench_ycsb.cpp:66] RW_RATIO = 20, ZIPF_THETA = 0.7, CROSS_RATIO = 50
+I20260307 04:16:09.473030  1749 bench_ycsb.cpp:67] checkpoint 0 to 
+I20260307 04:16:09.473032  1749 bench_ycsb.cpp:68] cross_part_num 2
+I20260307 04:16:09.473034  1749 bench_ycsb.cpp:69] lotus_sp_parallel_exec_commit 0
+I20260307 04:16:09.473035  1749 bench_ycsb.cpp:70] granules_per_partition 2000
+I20260307 04:16:09.473037  1749 bench_ycsb.cpp:71] keysPerGranule 100
+I20260307 04:16:09.985208  1749 Database.h:81] ycsb initialization finished in 510 milliseconds.
+I20260307 04:16:09.985303  1749 CXLMemory.h:188] Shared CXL memory FIXED at 0x500000000000 (size=262144000 bytes)
+I20260307 04:16:09.985522  1749 CXLMemory.h:224] Bump allocator OPENED from shared memory: current_offset=2110384 heap_size=262139904 offset_ptr=0x500000000ff0
+I20260307 04:16:09.985530  1749 CXLMemory.h:229] Shared bump allocator initialized (cross-process safe)
+I20260307 04:16:09.985532  1749 CXLMemory.h:231] Custom allocator ready for thread 0 (replaces cxlalloc) (global ID = 2) on host 1
+I20260307 04:16:09.985545  1749 CXLMemory.h:561] CXL DEBUG: Reading metadata[0] = 4096 (METADATA_NO_DATA=18446744073709551615) retry=0
+I20260307 04:16:09.985553  1749 CXLMemory.h:575] CXL: Read offset 4096 from shared metadata[0]
+I20260307 04:16:09.985555  1749 Coordinator.h:443] Coordinator 1 retrives CXL transport metadata (2 ringbuffers each with 128 entries (each 8183 Bytes)
+I20260307 04:16:09.985586  1749 CXLMemory.h:561] CXL DEBUG: Reading metadata[4] = 2101360 (METADATA_NO_DATA=18446744073709551615) retry=0
+I20260307 04:16:09.985594  1749 CXLMemory.h:575] CXL: Read offset 2101360 from shared metadata[4]
+I20260307 04:16:09.985596  1749 Coordinator.h:471] retrieved global CXL EBR metadata
+I20260307 04:16:09.985656  1749 Coordinator.h:97] WAL Group Commiting off. Log to file _non_group_commit.txt using Blackhole Logger
+I20260307 04:16:09.985659  1749 Coordinator.h:101] Coordinator initializes 1 workers.
+I20260307 04:16:09.985713  1749 CXLMemory.h:561] CXL DEBUG: Reading metadata[1] = 2101712 (METADATA_NO_DATA=18446744073709551615) retry=0
+I20260307 04:16:09.985721  1749 CXLMemory.h:575] CXL: Read offset 2101712 from shared metadata[1]
+I20260307 04:16:09.985908  1749 Database.h:240] YCSB retrieves data migration metadata
+I20260307 04:16:09.985924  1749 TwoPLPashaExecutor.h:52] total hardware budget = 104857600 per host = 51904512
+I20260307 04:16:09.986069  1752 Coordinator.h:500] Listener 0 on coordinator 1 listening on 192.168.100.10:1234 tcp_no_delay 1 tcp_quick_ack 0
+I20260307 04:16:09.986292  1749 Socket.h:69] Disabling nagle
+I20260307 04:16:09.986304  1749 Coordinator.h:555] Coordinator 1 connected to 0
+I20260307 04:16:13.428920  1752 Socket.h:69] Disabling nagle
+I20260307 04:16:13.428972  1752 Coordinator.h:515] Listener accepted connection from coordinator 0
+I20260307 04:16:13.428973  1752 Coordinator.h:518] Listener 0 on coordinator 1 exits.
+I20260307 04:16:13.429075  1749 Coordinator.h:567] Coordinator 1 connected to all peers.
+I20260307 04:16:13.429090  1749 Dispatcher.h:38] IncomingDispatcher 0 coord_id 1
+I20260307 04:16:13.429119  1749 Dispatcher.h:210] OutgoingDispatcher 0 coord_id 1
+I20260307 04:16:13.429163  1749 Coordinator.h:664] pinned thread to core 0
+I20260307 04:16:13.429191  1753 Dispatcher.h:57] Incoming Dispatcher started, numCoordinators = 2, numWorkers = 1, group id = 0, coordinator = 1
+I20260307 04:16:13.429327  1749 Coordinator.h:664] pinned thread to core 1
+I20260307 04:16:13.429359  1754 Dispatcher.h:222] Outgoing Dispatcher started, numCoordinators = 2, numWorkers = 2, group id = 0
+I20260307 04:16:13.429407  1749 Coordinator.h:216] Coordinator starts to run 2 workers.
+I20260307 04:16:13.429509  1749 Coordinator.h:664] pinned thread to core 2
+I20260307 04:16:13.429548  1756 Manager.h:232] Manager(worker id = 1) on the non-coordinator node started.
+I20260307 04:16:13.429556  1755 Executor.h:79] Executor 0 starts.
+I20260307 04:16:13.429621  1755 CXLMemory.h:231] Custom allocator ready for thread 1 (replaces cxlalloc) (global ID = 3) on host 1
+I20260307 04:16:13.429659  1755 CXL_EBR.h:84] init local EBR metadata, coordinator_id = 1 thread_id = 0
+I20260307 04:16:13.431676  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #0 outstanding=1 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.431752  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #1 outstanding=2 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.431825  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #2 outstanding=3 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.431977  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #3 outstanding=4 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.434002  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2110384 ptr=0x5000002033b0
+I20260307 04:16:13.434031  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2110400 ptr=0x5000002033c0
+I20260307 04:16:13.444661  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2112528 ptr=0x500000203c10
+I20260307 04:16:13.444684  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2112544 ptr=0x500000203c20
+I20260307 04:16:13.455120  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2115744 ptr=0x5000002048a0
+I20260307 04:16:13.455144  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2115760 ptr=0x5000002048b0
+I20260307 04:16:13.465488  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2116816 ptr=0x500000204cd0
+I20260307 04:16:13.465521  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2116832 ptr=0x500000204ce0
+I20260307 04:16:13.475838  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2118944 ptr=0x500000205520
+I20260307 04:16:13.475862  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2118960 ptr=0x500000205530
+I20260307 04:16:13.530977  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #0 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:13.530989  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #0 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.531149  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #1 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:13.531158  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #1 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.531302  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #2 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:13.531309  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #2 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.531419  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #3 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:13.531426  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #3 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.542717  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #4 outstanding=5 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.552771  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #5 outstanding=6 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.562727  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #6 outstanding=7 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.572744  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #7 outstanding=8 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.572783  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2121088 ptr=0x500000205d80
+I20260307 04:16:13.572808  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2121104 ptr=0x500000205d90
+I20260307 04:16:13.583241  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2122160 ptr=0x5000002061b0
+I20260307 04:16:13.583276  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2122176 ptr=0x5000002061c0
+I20260307 04:16:13.593761  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2123232 ptr=0x5000002065e0
+I20260307 04:16:13.593794  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2123248 ptr=0x5000002065f0
+I20260307 04:16:13.604467  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2124304 ptr=0x500000206a10
+I20260307 04:16:13.604491  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2124320 ptr=0x500000206a20
+I20260307 04:16:13.615379  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2125376 ptr=0x500000206e40
+I20260307 04:16:13.615406  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2125392 ptr=0x500000206e50
+I20260307 04:16:13.626121  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #4 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:13.626135  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #4 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.626271  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #5 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:13.626279  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #5 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.626417  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #6 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:13.626425  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #6 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.626566  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #7 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:13.626574  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #7 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.637781  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #8 outstanding=9 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.647672  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #9 outstanding=10 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.657577  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #10 outstanding=11 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.667721  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #11 outstanding=12 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.684986  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #8 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:13.684998  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #8 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.685142  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #9 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:13.685150  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #9 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.685267  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #10 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:13.685276  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #10 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.685386  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #11 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:13.685395  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #11 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.696419  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #12 outstanding=13 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.706331  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #13 outstanding=14 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.716284  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #14 outstanding=15 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.726205  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #15 outstanding=16 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.726233  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2126448 ptr=0x500000207270
+I20260307 04:16:13.726254  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2126464 ptr=0x500000207280
+I20260307 04:16:13.737289  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2127520 ptr=0x5000002076a0
+I20260307 04:16:13.737318  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2127536 ptr=0x5000002076b0
+I20260307 04:16:13.748672  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2128592 ptr=0x500000207ad0
+I20260307 04:16:13.748703  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2128608 ptr=0x500000207ae0
+I20260307 04:16:13.759913  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2129664 ptr=0x500000207f00
+I20260307 04:16:13.759946  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2129680 ptr=0x500000207f10
+I20260307 04:16:13.771632  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2130736 ptr=0x500000208330
+I20260307 04:16:13.771668  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2130752 ptr=0x500000208340
+I20260307 04:16:13.782756  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #12 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:13.782768  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #12 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.782917  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #13 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:13.782925  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #13 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.783071  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #14 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:13.783079  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #14 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.783196  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #15 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:13.783205  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #15 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.794576  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #16 outstanding=17 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.804921  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #17 outstanding=18 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.814922  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #18 outstanding=19 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.824872  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #19 outstanding=20 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.841179  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #16 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:13.841192  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #16 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.841358  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #17 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:13.841367  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #17 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.841501  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #18 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:13.841511  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #18 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.841621  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #19 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:13.841629  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #19 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.852460  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #20 outstanding=21 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.862076  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #21 outstanding=22 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.871712  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #22 outstanding=23 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.881606  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #23 outstanding=24 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.885735  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2131808 ptr=0x500000208760
+I20260307 04:16:13.885762  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2131824 ptr=0x500000208770
+I20260307 04:16:13.896389  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2132880 ptr=0x500000208b90
+I20260307 04:16:13.896415  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2132896 ptr=0x500000208ba0
+I20260307 04:16:13.906788  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2133952 ptr=0x500000208fc0
+I20260307 04:16:13.906816  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2133968 ptr=0x500000208fd0
+I20260307 04:16:13.917524  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2135024 ptr=0x5000002093f0
+I20260307 04:16:13.917555  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2135040 ptr=0x500000209400
+I20260307 04:16:13.928193  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2136096 ptr=0x500000209820
+I20260307 04:16:13.928227  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2136112 ptr=0x500000209830
+I20260307 04:16:13.938992  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #20 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:13.939010  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #20 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.939152  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #21 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:13.939160  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #21 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.939323  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #22 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:13.939332  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #22 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.939458  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #23 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:13.939466  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #23 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.950672  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #24 outstanding=25 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.960820  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #25 outstanding=26 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.970957  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #26 outstanding=27 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.981280  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #27 outstanding=28 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:13.992864  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #24 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:13.992877  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #24 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.993026  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #25 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:13.993036  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #25 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.993171  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #26 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:13.993180  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #26 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:13.993306  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #27 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:13.993315  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #27 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.004949  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #28 outstanding=29 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.016166  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #29 outstanding=30 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.026878  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #30 outstanding=31 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.037544  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #31 outstanding=32 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.037583  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2137168 ptr=0x500000209c50
+I20260307 04:16:14.037611  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2137184 ptr=0x500000209c60
+I20260307 04:16:14.048676  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2138240 ptr=0x50000020a080
+I20260307 04:16:14.048740  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2138256 ptr=0x50000020a090
+I20260307 04:16:14.059450  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2139312 ptr=0x50000020a4b0
+I20260307 04:16:14.059489  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2139328 ptr=0x50000020a4c0
+I20260307 04:16:14.070704  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2140384 ptr=0x50000020a8e0
+I20260307 04:16:14.070736  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2140400 ptr=0x50000020a8f0
+I20260307 04:16:14.082055  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2141456 ptr=0x50000020ad10
+I20260307 04:16:14.082078  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2141472 ptr=0x50000020ad20
+I20260307 04:16:14.093537  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #28 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:14.093590  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #28 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.093757  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #29 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:14.093768  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #29 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.093920  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #30 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:14.093928  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #30 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.094060  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #31 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:14.094069  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #31 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.105229  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #32 outstanding=33 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.115126  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #33 outstanding=34 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.125054  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #34 outstanding=35 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.135165  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #35 outstanding=36 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.148593  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #32 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:14.148605  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #32 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.148732  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #33 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:14.148742  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #33 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.148878  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #34 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:14.148886  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #34 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.148988  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #35 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:14.149001  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #35 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.160071  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #36 outstanding=37 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.170133  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #37 outstanding=38 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.179921  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #38 outstanding=39 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.190125  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #39 outstanding=40 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.200304  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #36 readSet[0] meta_ptr=0x78fdfe611400 lmeta=0x78fdfe606870 tid=0x8000000000000000
+I20260307 04:16:14.200313  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #36 lmeta=0x78fdfe606870 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.200438  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #37 readSet[4] meta_ptr=0x78fdfe530800 lmeta=0x78fdfe504ce0 tid=0x8000000000000000
+I20260307 04:16:14.200445  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #37 lmeta=0x78fdfe504ce0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.200583  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #38 readSet[6] meta_ptr=0x78fdfe604000 lmeta=0x78fdfe6060c0 tid=0x8000000000000000
+I20260307 04:16:14.200591  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #38 lmeta=0x78fdfe6060c0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.200712  1755 TwoPLPasha.h:145] ABORT_WLOCK_RELEASE_PHANTOM_PREP: #39 readSet[8] meta_ptr=0x78fdfe7a4000 lmeta=0x78fdfe754dc0 tid=0x8000000000000000
+I20260307 04:16:14.200722  1755 TwoPLPashaHelper.h:1229] WLOCK_RELEASE_ABORT (LOCAL): #39 lmeta=0x78fdfe754dc0 old_tid=0x8000000000000000 write_locked=1
+I20260307 04:16:14.211444  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #40 outstanding=41 lmeta=0x78fdfe754dc0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.221228  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #41 outstanding=42 lmeta=0x78fdfe6060c0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.230921  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #42 outstanding=43 lmeta=0x78fdfe504ce0 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.240950  1755 TwoPLPashaHelper.h:994] WLOCK_ACQUIRE (LOCAL): #43 outstanding=44 lmeta=0x78fdfe606870 old_tid=0x0 new_tid=0x8000000000000000
+I20260307 04:16:14.240981  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2142528 ptr=0x50000020b140
+I20260307 04:16:14.241019  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2142544 ptr=0x50000020b150
+I20260307 04:16:14.252933  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2143600 ptr=0x50000020b570
+I20260307 04:16:14.252956  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2143616 ptr=0x50000020b580
+I20260307 04:16:14.263736  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2144672 ptr=0x50000020b9a0
+I20260307 04:16:14.263767  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2144688 ptr=0x50000020b9b0
+I20260307 04:16:14.274178  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2145744 ptr=0x50000020bdd0
+I20260307 04:16:14.274200  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2145760 ptr=0x50000020bde0
+I20260307 04:16:14.284592  1755 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2146816 ptr=0x50000020c200
+I20260307 04:16:14.284616  1755 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2146832 ptr=0x50000020c210
+I20260307 04:16:14.429623  1749 Coordinator.h:307] commit: 0 abort: 10 (0/10/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 55, local_cxl_access: 0 (0%), remote_access: 55, remote_access_with_req: 15 (27.2727%), data_move_in: 30, data_move_out: 0
+I20260307 04:16:15.430652  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:16.430794  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:17.430943  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:18.431078  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:19.431219  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:20.431362  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:21.431502  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:22.431641  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:23.431777  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:24.431913  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:25.432051  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:26.432652  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:27.432775  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:28.432909  1749 Coordinator.h:307] commit: 0 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:28.432968  1749 Coordinator.h:345] average commit: 0 abort: 0 (0/0/0), abort_rate: -nan, network size: 0, avg network size: -nan, si_in_serializable: 0 -nan %, local: -nan %, local_access: 0, local_cxl_access: 0 (-nan%), remote_access: 0, remote_access_with_req: 0 (-nan%), data_move_in: 0, data_move_out: 0
+I20260307 04:16:28.432974  1749 Executor.h:233] Worker 0 latency: 0 us (50%) 0 us (75%) 0 us (95%) 0 us (99%). dist txn latency: 0 us (50%) 0 us (75%) 0 us (95%) 0 us (99%)  avg 0 us . local txn latency: 0 us (50%) 0 us (75%) 0 us (95%) 0 us (99%)  avg 0 us. txn commit latency: 0 us (50%) 0 us (75%) 0 us (95%) 0 us (99%) avg 0 us.
+ LOCAL txn stall 0 us,  local_work 0 us,  remote_work 0 us,  commit_work 0 us,  commit_prepare 0 us,  commit_persistence 0 us,  commit_write_back 0 us,  commit_replication 0 us,  commit_release_lock 0 us 
+ DIST txn stall 0 us,  local_work 0 us,  remote_work 0 us,  commit_work 0 us,  commit_prepare 0 us,  commit_persistence 0 us,  commit_write_back 0 us,  commit_replication 0 us,  commit_release_lock 0 us 
+I20260307 04:16:28.432981  1749 Executor.h:264] message stats, type: 0 count: 0 total size: 0
+I20260307 04:16:28.432982  1749 Executor.h:264] message stats, type: 1 count: 0 total size: 0
+I20260307 04:16:28.432983  1749 Executor.h:264] message stats, type: 2 count: 0 total size: 0
+I20260307 04:16:28.432984  1749 Executor.h:264] message stats, type: 3 count: 0 total size: 0
+I20260307 04:16:28.432986  1749 Executor.h:264] message stats, type: 4 count: 30 total size: 720
+I20260307 04:16:28.432986  1749 Executor.h:264] message stats, type: 5 count: 14 total size: 182
+I20260307 04:16:28.432988  1749 Executor.h:264] message stats, type: 6 count: 0 total size: 0
+I20260307 04:16:28.432989  1749 Executor.h:264] message stats, type: 7 count: 0 total size: 0
+I20260307 04:16:28.432991  1749 Executor.h:264] message stats, type: 8 count: 0 total size: 0
+I20260307 04:16:28.432991  1749 Executor.h:264] message stats, type: 9 count: 0 total size: 0
+I20260307 04:16:28.432992  1749 Executor.h:264] message stats, type: 10 count: 0 total size: 0
+I20260307 04:16:28.432994  1749 Executor.h:264] message stats, type: 11 count: 0 total size: 0

@@ -1,0 +1,692 @@
+I20260307 04:45:30.888495  2998 bench_ycsb.cpp:66] RW_RATIO = 100, ZIPF_THETA = 0.7, CROSS_RATIO = 50
+I20260307 04:45:30.888589  2998 bench_ycsb.cpp:67] checkpoint 0 to 
+I20260307 04:45:30.888592  2998 bench_ycsb.cpp:68] cross_part_num 2
+I20260307 04:45:30.888593  2998 bench_ycsb.cpp:69] lotus_sp_parallel_exec_commit 0
+I20260307 04:45:30.888597  2998 bench_ycsb.cpp:70] granules_per_partition 2000
+I20260307 04:45:30.888597  2998 bench_ycsb.cpp:71] keysPerGranule 100
+I20260307 04:45:31.398654  2998 Database.h:81] ycsb initialization finished in 507 milliseconds.
+I20260307 04:45:31.398736  2998 CXLMemory.h:188] Shared CXL memory FIXED at 0x500000000000 (size=262144000 bytes)
+I20260307 04:45:31.398937  2998 CXLMemory.h:224] Bump allocator OPENED from shared memory: current_offset=2110384 heap_size=262139904 offset_ptr=0x500000000ff0
+I20260307 04:45:31.398945  2998 CXLMemory.h:229] Shared bump allocator initialized (cross-process safe)
+I20260307 04:45:31.398947  2998 CXLMemory.h:231] Custom allocator ready for thread 0 (replaces cxlalloc) (global ID = 2) on host 1
+I20260307 04:45:31.398959  2998 CXLMemory.h:561] CXL DEBUG: Reading metadata[0] = 4096 (METADATA_NO_DATA=18446744073709551615) retry=0
+I20260307 04:45:31.398967  2998 CXLMemory.h:575] CXL: Read offset 4096 from shared metadata[0]
+I20260307 04:45:31.398969  2998 Coordinator.h:443] Coordinator 1 retrives CXL transport metadata (2 ringbuffers each with 128 entries (each 8183 Bytes)
+I20260307 04:45:31.398998  2998 CXLMemory.h:561] CXL DEBUG: Reading metadata[4] = 2101360 (METADATA_NO_DATA=18446744073709551615) retry=0
+I20260307 04:45:31.399006  2998 CXLMemory.h:575] CXL: Read offset 2101360 from shared metadata[4]
+I20260307 04:45:31.399008  2998 Coordinator.h:471] retrieved global CXL EBR metadata
+I20260307 04:45:31.399048  2998 Coordinator.h:97] WAL Group Commiting off. Log to file _non_group_commit.txt using Blackhole Logger
+I20260307 04:45:31.399050  2998 Coordinator.h:101] Coordinator initializes 1 workers.
+I20260307 04:45:31.399111  2998 CXLMemory.h:561] CXL DEBUG: Reading metadata[1] = 2101712 (METADATA_NO_DATA=18446744073709551615) retry=0
+I20260307 04:45:31.399118  2998 CXLMemory.h:575] CXL: Read offset 2101712 from shared metadata[1]
+I20260307 04:45:31.399292  2998 Database.h:240] YCSB retrieves data migration metadata
+I20260307 04:45:31.399307  2998 TwoPLPashaExecutor.h:52] total hardware budget = 104857600 per host = 51904512
+I20260307 04:45:31.399432  3001 Coordinator.h:500] Listener 0 on coordinator 1 listening on 192.168.100.10:1234 tcp_no_delay 1 tcp_quick_ack 0
+I20260307 04:45:31.399614  2998 Socket.h:69] Disabling nagle
+I20260307 04:45:31.399618  2998 Coordinator.h:555] Coordinator 1 connected to 0
+I20260307 04:45:35.639546  3001 Socket.h:69] Disabling nagle
+I20260307 04:45:35.639609  3001 Coordinator.h:515] Listener accepted connection from coordinator 0
+I20260307 04:45:35.639614  3001 Coordinator.h:518] Listener 0 on coordinator 1 exits.
+I20260307 04:45:35.639760  2998 Coordinator.h:567] Coordinator 1 connected to all peers.
+I20260307 04:45:35.639788  2998 Dispatcher.h:38] IncomingDispatcher 0 coord_id 1
+I20260307 04:45:35.639837  2998 Dispatcher.h:210] OutgoingDispatcher 0 coord_id 1
+I20260307 04:45:35.639906  2998 Coordinator.h:664] pinned thread to core 0
+I20260307 04:45:35.639922  3002 Dispatcher.h:57] Incoming Dispatcher started, numCoordinators = 2, numWorkers = 1, group id = 0, coordinator = 1
+I20260307 04:45:35.640017  2998 Coordinator.h:664] pinned thread to core 1
+I20260307 04:45:35.640024  3003 Dispatcher.h:222] Outgoing Dispatcher started, numCoordinators = 2, numWorkers = 2, group id = 0
+I20260307 04:45:35.640058  2998 Coordinator.h:216] Coordinator starts to run 2 workers.
+I20260307 04:45:35.640148  2998 Coordinator.h:664] pinned thread to core 2
+I20260307 04:45:35.640154  3004 Executor.h:79] Executor 0 starts.
+I20260307 04:45:35.640202  3004 CXLMemory.h:231] Custom allocator ready for thread 1 (replaces cxlalloc) (global ID = 3) on host 1
+I20260307 04:45:35.640204  3005 Manager.h:232] Manager(worker id = 1) on the non-coordinator node started.
+I20260307 04:45:35.640237  3004 CXL_EBR.h:84] init local EBR metadata, coordinator_id = 1 thread_id = 0
+I20260307 04:45:35.646660  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2110384 ptr=0x5000002033b0
+I20260307 04:45:35.646703  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2110400 ptr=0x5000002033c0
+I20260307 04:45:35.657313  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2112528 ptr=0x500000203c10
+I20260307 04:45:35.657352  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2112544 ptr=0x500000203c20
+I20260307 04:45:35.670181  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2114672 ptr=0x500000204470
+I20260307 04:45:35.670246  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2114688 ptr=0x500000204480
+I20260307 04:45:35.680325  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2116816 ptr=0x500000204cd0
+I20260307 04:45:35.680349  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2116832 ptr=0x500000204ce0
+I20260307 04:45:35.690601  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2118960 ptr=0x500000205530
+I20260307 04:45:35.690625  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2118976 ptr=0x500000205540
+I20260307 04:45:35.762578  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2121104 ptr=0x500000205d90
+I20260307 04:45:35.762619  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2121120 ptr=0x500000205da0
+I20260307 04:45:35.772351  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2123248 ptr=0x5000002065f0
+I20260307 04:45:35.772387  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2123264 ptr=0x500000206600
+I20260307 04:45:35.782461  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2125392 ptr=0x500000206e50
+I20260307 04:45:35.782486  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2125408 ptr=0x500000206e60
+I20260307 04:45:35.792377  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2127536 ptr=0x5000002076b0
+I20260307 04:45:35.792402  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2127552 ptr=0x5000002076c0
+I20260307 04:45:35.802892  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2129680 ptr=0x500000207f10
+I20260307 04:45:35.802917  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2129696 ptr=0x500000207f20
+I20260307 04:45:35.876154  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2132896 ptr=0x500000208ba0
+I20260307 04:45:35.876349  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2132912 ptr=0x500000208bb0
+I20260307 04:45:35.886276  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2133968 ptr=0x500000208fd0
+I20260307 04:45:35.886312  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2133984 ptr=0x500000208fe0
+I20260307 04:45:35.896484  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2136112 ptr=0x500000209830
+I20260307 04:45:35.896507  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2136128 ptr=0x500000209840
+I20260307 04:45:35.905941  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2138256 ptr=0x50000020a090
+I20260307 04:45:35.905970  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2138272 ptr=0x50000020a0a0
+I20260307 04:45:35.915902  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2140400 ptr=0x50000020a8f0
+I20260307 04:45:35.915925  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2140416 ptr=0x50000020a900
+I20260307 04:45:35.988651  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2143616 ptr=0x50000020b580
+I20260307 04:45:35.988705  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2143632 ptr=0x50000020b590
+I20260307 04:45:35.998526  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2145760 ptr=0x50000020bde0
+I20260307 04:45:35.998574  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2145776 ptr=0x50000020bdf0
+I20260307 04:45:36.008723  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2147904 ptr=0x50000020c640
+I20260307 04:45:36.008746  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2147920 ptr=0x50000020c650
+I20260307 04:45:36.018760  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2150048 ptr=0x50000020cea0
+I20260307 04:45:36.018800  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2150064 ptr=0x50000020ceb0
+I20260307 04:45:36.028232  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2151120 ptr=0x50000020d2d0
+I20260307 04:45:36.028265  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2151136 ptr=0x50000020d2e0
+I20260307 04:45:36.100229  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2154336 ptr=0x50000020df60
+I20260307 04:45:36.100281  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2154352 ptr=0x50000020df70
+I20260307 04:45:36.109825  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2156480 ptr=0x50000020e7c0
+I20260307 04:45:36.109849  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2156496 ptr=0x50000020e7d0
+I20260307 04:45:36.120007  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2158624 ptr=0x50000020f020
+I20260307 04:45:36.120029  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2158640 ptr=0x50000020f030
+I20260307 04:45:36.129611  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2159696 ptr=0x50000020f450
+I20260307 04:45:36.129653  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2159712 ptr=0x50000020f460
+I20260307 04:45:36.140576  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2161840 ptr=0x50000020fcb0
+I20260307 04:45:36.140601  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2161856 ptr=0x50000020fcc0
+I20260307 04:45:36.321930  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2169344 ptr=0x500000211a00
+I20260307 04:45:36.321998  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2169360 ptr=0x500000211a10
+I20260307 04:45:36.331784  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2170416 ptr=0x500000211e30
+I20260307 04:45:36.331806  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2170432 ptr=0x500000211e40
+I20260307 04:45:36.341773  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2171488 ptr=0x500000212260
+I20260307 04:45:36.341795  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2171504 ptr=0x500000212270
+I20260307 04:45:36.352435  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2172560 ptr=0x500000212690
+I20260307 04:45:36.352459  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2172576 ptr=0x5000002126a0
+I20260307 04:45:36.362711  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2173632 ptr=0x500000212ac0
+I20260307 04:45:36.362738  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2173648 ptr=0x500000212ad0
+I20260307 04:45:36.551923  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2180064 ptr=0x5000002143e0
+I20260307 04:45:36.551983  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2180080 ptr=0x5000002143f0
+I20260307 04:45:36.563514  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2181136 ptr=0x500000214810
+I20260307 04:45:36.563540  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2181152 ptr=0x500000214820
+I20260307 04:45:36.575366  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2182208 ptr=0x500000214c40
+I20260307 04:45:36.575395  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2182224 ptr=0x500000214c50
+I20260307 04:45:36.586493  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2183280 ptr=0x500000215070
+I20260307 04:45:36.586529  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2183296 ptr=0x500000215080
+I20260307 04:45:36.598448  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2184352 ptr=0x5000002154a0
+I20260307 04:45:36.598474  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2184368 ptr=0x5000002154b0
+I20260307 04:45:36.640270  2998 Coordinator.h:307] commit: 18 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 840, avg network size: 46.6667, si_in_serializable: 0 0 %, local: 0 %, local_access: 150, local_cxl_access: 0 (0%), remote_access: 40, remote_access_with_req: 40 (100%), data_move_in: 35, data_move_out: 0
+I20260307 04:45:36.779949  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2190784 ptr=0x500000216dc0
+I20260307 04:45:36.780015  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2190800 ptr=0x500000216dd0
+I20260307 04:45:36.790514  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2191856 ptr=0x5000002171f0
+I20260307 04:45:36.790539  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2191872 ptr=0x500000217200
+I20260307 04:45:36.801667  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2192928 ptr=0x500000217620
+I20260307 04:45:36.801690  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2192944 ptr=0x500000217630
+I20260307 04:45:36.812847  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2194000 ptr=0x500000217a50
+I20260307 04:45:36.812870  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2194016 ptr=0x500000217a60
+I20260307 04:45:36.994132  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2200432 ptr=0x500000219370
+I20260307 04:45:36.994199  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2200448 ptr=0x500000219380
+I20260307 04:45:37.006165  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2201504 ptr=0x5000002197a0
+I20260307 04:45:37.006201  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2201520 ptr=0x5000002197b0
+I20260307 04:45:37.019181  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2202576 ptr=0x500000219bd0
+I20260307 04:45:37.019217  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2202592 ptr=0x500000219be0
+I20260307 04:45:37.031670  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2203648 ptr=0x50000021a000
+I20260307 04:45:37.031713  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2203664 ptr=0x50000021a010
+I20260307 04:45:37.044117  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2204720 ptr=0x50000021a430
+I20260307 04:45:37.044149  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2204736 ptr=0x50000021a440
+I20260307 04:45:37.220106  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2210080 ptr=0x50000021b920
+I20260307 04:45:37.220170  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2210096 ptr=0x50000021b930
+I20260307 04:45:37.233393  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2211152 ptr=0x50000021bd50
+I20260307 04:45:37.233441  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2211168 ptr=0x50000021bd60
+I20260307 04:45:37.245577  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2212224 ptr=0x50000021c180
+I20260307 04:45:37.245608  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2212240 ptr=0x50000021c190
+I20260307 04:45:37.259521  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2213296 ptr=0x50000021c5b0
+I20260307 04:45:37.259564  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2213312 ptr=0x50000021c5c0
+I20260307 04:45:37.272148  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2214368 ptr=0x50000021c9e0
+I20260307 04:45:37.272188  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2214384 ptr=0x50000021c9f0
+I20260307 04:45:37.474464  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2220800 ptr=0x50000021e300
+I20260307 04:45:37.474530  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2220816 ptr=0x50000021e310
+I20260307 04:45:37.488708  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2221872 ptr=0x50000021e730
+I20260307 04:45:37.488757  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2221888 ptr=0x50000021e740
+I20260307 04:45:37.503125  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2222944 ptr=0x50000021eb60
+I20260307 04:45:37.503154  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2222960 ptr=0x50000021eb70
+I20260307 04:45:37.517633  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2224016 ptr=0x50000021ef90
+I20260307 04:45:37.517684  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2224032 ptr=0x50000021efa0
+I20260307 04:45:37.529556  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2225088 ptr=0x50000021f3c0
+I20260307 04:45:37.529580  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2225104 ptr=0x50000021f3d0
+I20260307 04:45:37.640367  2998 Coordinator.h:307] commit: 12 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 456, avg network size: 38, si_in_serializable: 0 0 %, local: 0 %, local_access: 100, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 19 (95%), data_move_in: 19, data_move_out: 0
+I20260307 04:45:37.728044  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2231520 ptr=0x500000220ce0
+I20260307 04:45:37.728078  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2231536 ptr=0x500000220cf0
+I20260307 04:45:37.741091  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2232592 ptr=0x500000221110
+I20260307 04:45:37.741117  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2232608 ptr=0x500000221120
+I20260307 04:45:37.754855  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2233664 ptr=0x500000221540
+I20260307 04:45:37.754880  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2233680 ptr=0x500000221550
+I20260307 04:45:37.766911  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2234736 ptr=0x500000221970
+I20260307 04:45:37.766939  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2234752 ptr=0x500000221980
+I20260307 04:45:37.779865  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2235808 ptr=0x500000221da0
+I20260307 04:45:37.779894  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2235824 ptr=0x500000221db0
+I20260307 04:45:37.978940  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2242240 ptr=0x5000002236c0
+I20260307 04:45:37.978964  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2242256 ptr=0x5000002236d0
+I20260307 04:45:37.991524  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2243312 ptr=0x500000223af0
+I20260307 04:45:37.991549  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2243328 ptr=0x500000223b00
+I20260307 04:45:38.006489  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2244384 ptr=0x500000223f20
+I20260307 04:45:38.006517  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2244400 ptr=0x500000223f30
+I20260307 04:45:38.021514  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2245456 ptr=0x500000224350
+I20260307 04:45:38.021550  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2245472 ptr=0x500000224360
+I20260307 04:45:38.195319  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2251888 ptr=0x500000225c70
+I20260307 04:45:38.195345  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2251904 ptr=0x500000225c80
+I20260307 04:45:38.208595  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2252960 ptr=0x5000002260a0
+I20260307 04:45:38.208623  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2252976 ptr=0x5000002260b0
+I20260307 04:45:38.221215  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2254032 ptr=0x5000002264d0
+I20260307 04:45:38.221238  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2254048 ptr=0x5000002264e0
+I20260307 04:45:38.236342  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2255104 ptr=0x500000226900
+I20260307 04:45:38.236377  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2255120 ptr=0x500000226910
+I20260307 04:45:38.251209  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2256176 ptr=0x500000226d30
+I20260307 04:45:38.251243  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2256192 ptr=0x500000226d40
+I20260307 04:45:38.443306  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2262608 ptr=0x500000228650
+I20260307 04:45:38.443331  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2262624 ptr=0x500000228660
+I20260307 04:45:38.456410  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2263680 ptr=0x500000228a80
+I20260307 04:45:38.456444  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2263696 ptr=0x500000228a90
+I20260307 04:45:38.469676  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2264752 ptr=0x500000228eb0
+I20260307 04:45:38.469713  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2264768 ptr=0x500000228ec0
+I20260307 04:45:38.484834  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2265824 ptr=0x5000002292e0
+I20260307 04:45:38.484859  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2265840 ptr=0x5000002292f0
+I20260307 04:45:38.497227  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2266896 ptr=0x500000229710
+I20260307 04:45:38.497262  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2266912 ptr=0x500000229720
+I20260307 04:45:38.640467  2998 Coordinator.h:307] commit: 8 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 60, si_in_serializable: 0 0 %, local: 0 %, local_access: 60, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 19, data_move_out: 0
+I20260307 04:45:38.691195  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2273328 ptr=0x50000022b030
+I20260307 04:45:38.691220  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2273344 ptr=0x50000022b040
+I20260307 04:45:38.706967  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2274400 ptr=0x50000022b460
+I20260307 04:45:38.706992  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2274416 ptr=0x50000022b470
+I20260307 04:45:38.720842  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2275472 ptr=0x50000022b890
+I20260307 04:45:38.720866  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2275488 ptr=0x50000022b8a0
+I20260307 04:45:38.735723  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2276544 ptr=0x50000022bcc0
+I20260307 04:45:38.735747  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2276560 ptr=0x50000022bcd0
+I20260307 04:45:38.749572  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2277616 ptr=0x50000022c0f0
+I20260307 04:45:38.749596  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2277632 ptr=0x50000022c100
+I20260307 04:45:38.942996  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2284048 ptr=0x50000022da10
+I20260307 04:45:38.943022  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2284064 ptr=0x50000022da20
+I20260307 04:45:38.958030  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2285120 ptr=0x50000022de40
+I20260307 04:45:38.958060  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2285136 ptr=0x50000022de50
+I20260307 04:45:38.971597  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2286192 ptr=0x50000022e270
+I20260307 04:45:38.971621  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2286208 ptr=0x50000022e280
+I20260307 04:45:38.986161  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2287264 ptr=0x50000022e6a0
+I20260307 04:45:38.986186  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2287280 ptr=0x50000022e6b0
+I20260307 04:45:38.998713  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2288336 ptr=0x50000022ead0
+I20260307 04:45:38.998737  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2288352 ptr=0x50000022eae0
+I20260307 04:45:39.208662  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2294768 ptr=0x5000002303f0
+I20260307 04:45:39.208726  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2294784 ptr=0x500000230400
+I20260307 04:45:39.222669  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2295840 ptr=0x500000230820
+I20260307 04:45:39.222697  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2295856 ptr=0x500000230830
+I20260307 04:45:39.238713  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2296912 ptr=0x500000230c50
+I20260307 04:45:39.238750  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2296928 ptr=0x500000230c60
+I20260307 04:45:39.251521  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2297984 ptr=0x500000231080
+I20260307 04:45:39.251545  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2298000 ptr=0x500000231090
+I20260307 04:45:39.267318  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2299056 ptr=0x5000002314b0
+I20260307 04:45:39.267341  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2299072 ptr=0x5000002314c0
+I20260307 04:45:39.464169  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2305488 ptr=0x500000232dd0
+I20260307 04:45:39.464238  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2305504 ptr=0x500000232de0
+I20260307 04:45:39.476169  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2306560 ptr=0x500000233200
+I20260307 04:45:39.476207  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2306576 ptr=0x500000233210
+I20260307 04:45:39.488305  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2307632 ptr=0x500000233630
+I20260307 04:45:39.488338  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2307648 ptr=0x500000233640
+I20260307 04:45:39.503713  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2308704 ptr=0x500000233a60
+I20260307 04:45:39.503744  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2308720 ptr=0x500000233a70
+I20260307 04:45:39.516017  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2309776 ptr=0x500000233e90
+I20260307 04:45:39.516042  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2309792 ptr=0x500000233ea0
+I20260307 04:45:39.640606  2998 Coordinator.h:307] commit: 17 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 28.2353, si_in_serializable: 0 0 %, local: 0 %, local_access: 150, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 20, data_move_out: 0
+I20260307 04:45:39.713126  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2316208 ptr=0x5000002357b0
+I20260307 04:45:39.713160  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2316224 ptr=0x5000002357c0
+I20260307 04:45:39.728229  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2317280 ptr=0x500000235be0
+I20260307 04:45:39.728266  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2317296 ptr=0x500000235bf0
+I20260307 04:45:39.740041  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2318352 ptr=0x500000236010
+I20260307 04:45:39.740067  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2318368 ptr=0x500000236020
+I20260307 04:45:39.750623  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2319424 ptr=0x500000236440
+I20260307 04:45:39.750655  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2319440 ptr=0x500000236450
+I20260307 04:45:39.764050  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2320496 ptr=0x500000236870
+I20260307 04:45:39.764073  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2320512 ptr=0x500000236880
+I20260307 04:45:39.942647  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2326928 ptr=0x500000238190
+I20260307 04:45:39.942675  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2326944 ptr=0x5000002381a0
+I20260307 04:45:39.953806  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2328000 ptr=0x5000002385c0
+I20260307 04:45:39.953830  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2328016 ptr=0x5000002385d0
+I20260307 04:45:39.964221  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2329072 ptr=0x5000002389f0
+I20260307 04:45:39.964244  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2329088 ptr=0x500000238a00
+I20260307 04:45:39.977056  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2330144 ptr=0x500000238e20
+I20260307 04:45:39.977078  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2330160 ptr=0x500000238e30
+I20260307 04:45:39.990917  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2331216 ptr=0x500000239250
+I20260307 04:45:39.990940  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2331232 ptr=0x500000239260
+I20260307 04:45:40.196985  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2337648 ptr=0x50000023ab70
+I20260307 04:45:40.197048  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2337664 ptr=0x50000023ab80
+I20260307 04:45:40.209357  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2338720 ptr=0x50000023afa0
+I20260307 04:45:40.209394  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2338736 ptr=0x50000023afb0
+I20260307 04:45:40.222487  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2339792 ptr=0x50000023b3d0
+I20260307 04:45:40.222522  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2339808 ptr=0x50000023b3e0
+I20260307 04:45:40.234347  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2340864 ptr=0x50000023b800
+I20260307 04:45:40.234371  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2340880 ptr=0x50000023b810
+I20260307 04:45:40.421834  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2347296 ptr=0x50000023d120
+I20260307 04:45:40.421890  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2347312 ptr=0x50000023d130
+I20260307 04:45:40.437821  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2348368 ptr=0x50000023d550
+I20260307 04:45:40.437847  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2348384 ptr=0x50000023d560
+I20260307 04:45:40.451493  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2349440 ptr=0x50000023d980
+I20260307 04:45:40.451517  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2349456 ptr=0x50000023d990
+I20260307 04:45:40.464301  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2350512 ptr=0x50000023ddb0
+I20260307 04:45:40.464324  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2350528 ptr=0x50000023ddc0
+I20260307 04:45:40.479969  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2351584 ptr=0x50000023e1e0
+I20260307 04:45:40.479992  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2351600 ptr=0x50000023e1f0
+I20260307 04:45:40.640764  2998 Coordinator.h:307] commit: 13 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 36.9231, si_in_serializable: 0 0 %, local: 0 %, local_access: 110, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 19, data_move_out: 0
+I20260307 04:45:40.684450  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2358016 ptr=0x50000023fb00
+I20260307 04:45:40.684489  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2358032 ptr=0x50000023fb10
+I20260307 04:45:40.697485  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2359088 ptr=0x50000023ff30
+I20260307 04:45:40.697508  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2359104 ptr=0x50000023ff40
+I20260307 04:45:40.708709  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2360160 ptr=0x500000240360
+I20260307 04:45:40.708742  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2360176 ptr=0x500000240370
+I20260307 04:45:40.722227  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2361232 ptr=0x500000240790
+I20260307 04:45:40.722257  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2361248 ptr=0x5000002407a0
+I20260307 04:45:40.733680  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2362304 ptr=0x500000240bc0
+I20260307 04:45:40.733762  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2362320 ptr=0x500000240bd0
+I20260307 04:45:40.931740  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2368736 ptr=0x5000002424e0
+I20260307 04:45:40.931888  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2368752 ptr=0x5000002424f0
+I20260307 04:45:40.947162  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2369808 ptr=0x500000242910
+I20260307 04:45:40.947187  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2369824 ptr=0x500000242920
+I20260307 04:45:40.959084  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2370880 ptr=0x500000242d40
+I20260307 04:45:40.959153  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2370896 ptr=0x500000242d50
+I20260307 04:45:40.974550  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2371952 ptr=0x500000243170
+I20260307 04:45:40.974582  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2371968 ptr=0x500000243180
+I20260307 04:45:40.987318  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2373024 ptr=0x5000002435a0
+I20260307 04:45:40.987358  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2373040 ptr=0x5000002435b0
+I20260307 04:45:41.183213  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2379456 ptr=0x500000244ec0
+I20260307 04:45:41.183255  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2379472 ptr=0x500000244ed0
+I20260307 04:45:41.194772  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2380528 ptr=0x5000002452f0
+I20260307 04:45:41.194796  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2380544 ptr=0x500000245300
+I20260307 04:45:41.206460  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2381600 ptr=0x500000245720
+I20260307 04:45:41.206485  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2381616 ptr=0x500000245730
+I20260307 04:45:41.218792  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2382672 ptr=0x500000245b50
+I20260307 04:45:41.218816  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2382688 ptr=0x500000245b60
+I20260307 04:45:41.234826  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2383744 ptr=0x500000245f80
+I20260307 04:45:41.234850  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2383760 ptr=0x500000245f90
+I20260307 04:45:41.431375  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2390176 ptr=0x5000002478a0
+I20260307 04:45:41.431432  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2390192 ptr=0x5000002478b0
+I20260307 04:45:41.446568  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2391248 ptr=0x500000247cd0
+I20260307 04:45:41.446599  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2391264 ptr=0x500000247ce0
+I20260307 04:45:41.460875  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2392320 ptr=0x500000248100
+I20260307 04:45:41.460901  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2392336 ptr=0x500000248110
+I20260307 04:45:41.479199  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2393392 ptr=0x500000248530
+I20260307 04:45:41.479235  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2393408 ptr=0x500000248540
+I20260307 04:45:41.495424  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2394464 ptr=0x500000248960
+I20260307 04:45:41.495448  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2394480 ptr=0x500000248970
+I20260307 04:45:41.640867  2998 Coordinator.h:307] commit: 6 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 80, si_in_serializable: 0 0 %, local: 0 %, local_access: 40, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 20, data_move_out: 0
+I20260307 04:45:41.692600  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2400896 ptr=0x50000024a280
+I20260307 04:45:41.692651  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2400912 ptr=0x50000024a290
+I20260307 04:45:41.704027  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2401968 ptr=0x50000024a6b0
+I20260307 04:45:41.704051  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2401984 ptr=0x50000024a6c0
+I20260307 04:45:41.718304  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2403040 ptr=0x50000024aae0
+I20260307 04:45:41.718328  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2403056 ptr=0x50000024aaf0
+I20260307 04:45:41.736162  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2404112 ptr=0x50000024af10
+I20260307 04:45:41.736192  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2404128 ptr=0x50000024af20
+I20260307 04:45:41.751315  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2405184 ptr=0x50000024b340
+I20260307 04:45:41.751341  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2405200 ptr=0x50000024b350
+I20260307 04:45:41.953542  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2411616 ptr=0x50000024cc60
+I20260307 04:45:41.953630  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2411632 ptr=0x50000024cc70
+I20260307 04:45:41.969110  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2412688 ptr=0x50000024d090
+I20260307 04:45:41.969151  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2412704 ptr=0x50000024d0a0
+I20260307 04:45:41.983714  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2413760 ptr=0x50000024d4c0
+I20260307 04:45:41.983755  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2413776 ptr=0x50000024d4d0
+I20260307 04:45:41.997831  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2414832 ptr=0x50000024d8f0
+I20260307 04:45:41.997861  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2414848 ptr=0x50000024d900
+I20260307 04:45:42.009383  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2415904 ptr=0x50000024dd20
+I20260307 04:45:42.009415  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2415920 ptr=0x50000024dd30
+I20260307 04:45:42.230386  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2422336 ptr=0x50000024f640
+I20260307 04:45:42.230444  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2422352 ptr=0x50000024f650
+I20260307 04:45:42.248822  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2423408 ptr=0x50000024fa70
+I20260307 04:45:42.248860  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2423424 ptr=0x50000024fa80
+I20260307 04:45:42.265501  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2424480 ptr=0x50000024fea0
+I20260307 04:45:42.265535  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2424496 ptr=0x50000024feb0
+I20260307 04:45:42.280776  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2425552 ptr=0x5000002502d0
+I20260307 04:45:42.280808  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2425568 ptr=0x5000002502e0
+I20260307 04:45:42.294127  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2426624 ptr=0x500000250700
+I20260307 04:45:42.294160  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2426640 ptr=0x500000250710
+I20260307 04:45:42.515942  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2433056 ptr=0x500000252020
+I20260307 04:45:42.516006  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2433072 ptr=0x500000252030
+I20260307 04:45:42.535270  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2434128 ptr=0x500000252450
+I20260307 04:45:42.535310  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2434144 ptr=0x500000252460
+I20260307 04:45:42.549997  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2435200 ptr=0x500000252880
+I20260307 04:45:42.550045  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2435216 ptr=0x500000252890
+I20260307 04:45:42.566761  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2436272 ptr=0x500000252cb0
+I20260307 04:45:42.566797  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2436288 ptr=0x500000252cc0
+I20260307 04:45:42.640997  2998 Coordinator.h:307] commit: 7 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 68.5714, si_in_serializable: 0 0 %, local: 0 %, local_access: 50, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 19, data_move_out: 0
+I20260307 04:45:42.781388  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2442704 ptr=0x5000002545d0
+I20260307 04:45:42.781466  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2442720 ptr=0x5000002545e0
+I20260307 04:45:42.793871  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2443776 ptr=0x500000254a00
+I20260307 04:45:42.793912  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2443792 ptr=0x500000254a10
+I20260307 04:45:42.809451  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2444848 ptr=0x500000254e30
+I20260307 04:45:42.809492  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2444864 ptr=0x500000254e40
+I20260307 04:45:42.821471  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2445920 ptr=0x500000255260
+I20260307 04:45:42.821506  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2445936 ptr=0x500000255270
+I20260307 04:45:42.838011  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2446992 ptr=0x500000255690
+I20260307 04:45:42.838061  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2447008 ptr=0x5000002556a0
+I20260307 04:45:43.048594  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2453424 ptr=0x500000256fb0
+I20260307 04:45:43.048666  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2453440 ptr=0x500000256fc0
+I20260307 04:45:43.065248  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2454496 ptr=0x5000002573e0
+I20260307 04:45:43.065291  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2454512 ptr=0x5000002573f0
+I20260307 04:45:43.085368  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2455568 ptr=0x500000257810
+I20260307 04:45:43.085409  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2455584 ptr=0x500000257820
+I20260307 04:45:43.100063  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2456640 ptr=0x500000257c40
+I20260307 04:45:43.100104  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2456656 ptr=0x500000257c50
+I20260307 04:45:43.119830  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2457712 ptr=0x500000258070
+I20260307 04:45:43.119858  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2457728 ptr=0x500000258080
+I20260307 04:45:43.334589  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2464144 ptr=0x500000259990
+I20260307 04:45:43.334659  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2464160 ptr=0x5000002599a0
+I20260307 04:45:43.354429  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2465216 ptr=0x500000259dc0
+I20260307 04:45:43.354480  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2465232 ptr=0x500000259dd0
+I20260307 04:45:43.367076  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2466288 ptr=0x50000025a1f0
+I20260307 04:45:43.367112  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2466304 ptr=0x50000025a200
+I20260307 04:45:43.380295  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2467360 ptr=0x50000025a620
+I20260307 04:45:43.380337  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2467376 ptr=0x50000025a630
+I20260307 04:45:43.399024  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2468432 ptr=0x50000025aa50
+I20260307 04:45:43.399050  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2468448 ptr=0x50000025aa60
+I20260307 04:45:43.591924  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2481312 ptr=0x50000025dca0
+I20260307 04:45:43.591992  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2481328 ptr=0x50000025dcb0
+I20260307 04:45:43.611059  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2482384 ptr=0x50000025e0d0
+I20260307 04:45:43.611104  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2482400 ptr=0x50000025e0e0
+I20260307 04:45:43.628613  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2483456 ptr=0x50000025e500
+I20260307 04:45:43.628667  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2483472 ptr=0x50000025e510
+I20260307 04:45:43.641131  2998 Coordinator.h:307] commit: 4 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 360, avg network size: 90, si_in_serializable: 0 0 %, local: 0 %, local_access: 25, local_cxl_access: 0 (0%), remote_access: 15, remote_access_with_req: 14 (93.3333%), data_move_in: 17, data_move_out: 0
+I20260307 04:45:43.645920  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2484528 ptr=0x50000025e930
+I20260307 04:45:43.645946  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2484544 ptr=0x50000025e940
+I20260307 04:45:43.656379  3004 CXLMemory.h:297] Bump alloc: size=3416 base=0x500000000000 offset=2485600 ptr=0x50000025ed60
+I20260307 04:45:43.670833  3004 CXLMemory.h:297] Bump alloc: size=4096 base=0x500000000000 offset=2489024 ptr=0x50000025fac0
+I20260307 04:45:43.671241  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2493120 ptr=0x500000260ac0
+I20260307 04:45:43.671263  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2493136 ptr=0x500000260ad0
+I20260307 04:45:43.859546  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2499552 ptr=0x5000002623e0
+I20260307 04:45:43.859586  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2499568 ptr=0x5000002623f0
+I20260307 04:45:43.873912  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2500624 ptr=0x500000262810
+I20260307 04:45:43.873947  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2500640 ptr=0x500000262820
+I20260307 04:45:43.888691  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2501696 ptr=0x500000262c40
+I20260307 04:45:43.888720  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2501712 ptr=0x500000262c50
+I20260307 04:45:43.901180  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2502768 ptr=0x500000263070
+I20260307 04:45:43.901213  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2502784 ptr=0x500000263080
+I20260307 04:45:43.917156  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2503840 ptr=0x5000002634a0
+I20260307 04:45:43.917182  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2503856 ptr=0x5000002634b0
+I20260307 04:45:44.108142  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2510272 ptr=0x500000264dc0
+I20260307 04:45:44.108209  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2510288 ptr=0x500000264dd0
+I20260307 04:45:44.123654  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2511344 ptr=0x5000002651f0
+I20260307 04:45:44.123697  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2511360 ptr=0x500000265200
+I20260307 04:45:44.136878  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2512416 ptr=0x500000265620
+I20260307 04:45:44.136904  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2512432 ptr=0x500000265630
+I20260307 04:45:44.153213  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2513488 ptr=0x500000265a50
+I20260307 04:45:44.153261  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2513504 ptr=0x500000265a60
+I20260307 04:45:44.168720  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2514560 ptr=0x500000265e80
+I20260307 04:45:44.168747  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2514576 ptr=0x500000265e90
+I20260307 04:45:44.362272  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2520992 ptr=0x5000002677a0
+I20260307 04:45:44.362341  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2521008 ptr=0x5000002677b0
+I20260307 04:45:44.374864  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2522064 ptr=0x500000267bd0
+I20260307 04:45:44.374917  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2522080 ptr=0x500000267be0
+I20260307 04:45:44.390360  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2523136 ptr=0x500000268000
+I20260307 04:45:44.390411  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2523152 ptr=0x500000268010
+I20260307 04:45:44.406751  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2524208 ptr=0x500000268430
+I20260307 04:45:44.406785  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2524224 ptr=0x500000268440
+I20260307 04:45:44.421669  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2525280 ptr=0x500000268860
+I20260307 04:45:44.421702  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2525296 ptr=0x500000268870
+I20260307 04:45:44.619216  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2531712 ptr=0x50000026a180
+I20260307 04:45:44.619292  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2531728 ptr=0x50000026a190
+I20260307 04:45:44.633940  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2532784 ptr=0x50000026a5b0
+I20260307 04:45:44.633982  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2532800 ptr=0x50000026a5c0
+I20260307 04:45:44.641229  2998 Coordinator.h:307] commit: 6 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 456, avg network size: 76, si_in_serializable: 0 0 %, local: 0 %, local_access: 40, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 19, data_move_out: 0
+I20260307 04:45:44.649912  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2533856 ptr=0x50000026a9e0
+I20260307 04:45:44.649940  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2533872 ptr=0x50000026a9f0
+I20260307 04:45:44.664824  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2534928 ptr=0x50000026ae10
+I20260307 04:45:44.664857  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2534944 ptr=0x50000026ae20
+I20260307 04:45:44.678490  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2536000 ptr=0x50000026b240
+I20260307 04:45:44.678524  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2536016 ptr=0x50000026b250
+I20260307 04:45:44.873253  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2542432 ptr=0x50000026cb60
+I20260307 04:45:44.873320  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2542448 ptr=0x50000026cb70
+I20260307 04:45:44.887334  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2543504 ptr=0x50000026cf90
+I20260307 04:45:44.887362  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2543520 ptr=0x50000026cfa0
+I20260307 04:45:44.899744  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2544576 ptr=0x50000026d3c0
+I20260307 04:45:44.899777  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2544592 ptr=0x50000026d3d0
+I20260307 04:45:44.912494  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2545648 ptr=0x50000026d7f0
+I20260307 04:45:44.912518  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2545664 ptr=0x50000026d800
+I20260307 04:45:44.927978  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2546720 ptr=0x50000026dc20
+I20260307 04:45:44.928007  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2546736 ptr=0x50000026dc30
+I20260307 04:45:45.132328  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2553152 ptr=0x50000026f540
+I20260307 04:45:45.132388  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2553168 ptr=0x50000026f550
+I20260307 04:45:45.147423  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2554224 ptr=0x50000026f970
+I20260307 04:45:45.147469  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2554240 ptr=0x50000026f980
+I20260307 04:45:45.161947  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2555296 ptr=0x50000026fda0
+I20260307 04:45:45.161970  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2555312 ptr=0x50000026fdb0
+I20260307 04:45:45.174460  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2556368 ptr=0x5000002701d0
+I20260307 04:45:45.174485  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2556384 ptr=0x5000002701e0
+I20260307 04:45:45.189682  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2557440 ptr=0x500000270600
+I20260307 04:45:45.189706  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2557456 ptr=0x500000270610
+I20260307 04:45:45.386894  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2563872 ptr=0x500000271f20
+I20260307 04:45:45.386968  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2563888 ptr=0x500000271f30
+I20260307 04:45:45.399303  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2564944 ptr=0x500000272350
+I20260307 04:45:45.399336  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2564960 ptr=0x500000272360
+I20260307 04:45:45.414321  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2566016 ptr=0x500000272780
+I20260307 04:45:45.414367  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2566032 ptr=0x500000272790
+I20260307 04:45:45.427204  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2567088 ptr=0x500000272bb0
+I20260307 04:45:45.427237  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2567104 ptr=0x500000272bc0
+I20260307 04:45:45.441080  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2568160 ptr=0x500000272fe0
+I20260307 04:45:45.441105  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2568176 ptr=0x500000272ff0
+I20260307 04:45:45.641356  2998 Coordinator.h:307] commit: 9 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 53.3333, si_in_serializable: 0 0 %, local: 0 %, local_access: 70, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 19, data_move_out: 0
+I20260307 04:45:45.645709  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2574592 ptr=0x500000274900
+I20260307 04:45:45.645772  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2574608 ptr=0x500000274910
+I20260307 04:45:45.660913  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2575664 ptr=0x500000274d30
+I20260307 04:45:45.660959  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2575680 ptr=0x500000274d40
+I20260307 04:45:45.673910  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2576736 ptr=0x500000275160
+I20260307 04:45:45.673935  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2576752 ptr=0x500000275170
+I20260307 04:45:45.691382  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2577808 ptr=0x500000275590
+I20260307 04:45:45.691408  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2577824 ptr=0x5000002755a0
+I20260307 04:45:45.707269  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2578880 ptr=0x5000002759c0
+I20260307 04:45:45.707304  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2578896 ptr=0x5000002759d0
+I20260307 04:45:45.912092  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2585312 ptr=0x5000002772e0
+I20260307 04:45:45.912168  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2585328 ptr=0x5000002772f0
+I20260307 04:45:45.927176  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2586384 ptr=0x500000277710
+I20260307 04:45:45.927220  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2586400 ptr=0x500000277720
+I20260307 04:45:45.942090  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2587456 ptr=0x500000277b40
+I20260307 04:45:45.942119  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2587472 ptr=0x500000277b50
+I20260307 04:45:45.954455  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2588528 ptr=0x500000277f70
+I20260307 04:45:45.954582  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2588544 ptr=0x500000277f80
+I20260307 04:45:45.966199  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2589600 ptr=0x5000002783a0
+I20260307 04:45:45.966236  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2589616 ptr=0x5000002783b0
+I20260307 04:45:46.143396  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2594960 ptr=0x500000279890
+I20260307 04:45:46.143462  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2594976 ptr=0x5000002798a0
+I20260307 04:45:46.157451  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2596032 ptr=0x500000279cc0
+I20260307 04:45:46.157477  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2596048 ptr=0x500000279cd0
+I20260307 04:45:46.169322  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2597104 ptr=0x50000027a0f0
+I20260307 04:45:46.169355  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2597120 ptr=0x50000027a100
+I20260307 04:45:46.184016  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2598176 ptr=0x50000027a520
+I20260307 04:45:46.184051  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2598192 ptr=0x50000027a530
+I20260307 04:45:46.200134  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2599248 ptr=0x50000027a950
+I20260307 04:45:46.200158  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2599264 ptr=0x50000027a960
+I20260307 04:45:46.404122  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2605680 ptr=0x50000027c270
+I20260307 04:45:46.404186  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2605696 ptr=0x50000027c280
+I20260307 04:45:46.418509  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2606752 ptr=0x50000027c6a0
+I20260307 04:45:46.418543  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2606768 ptr=0x50000027c6b0
+I20260307 04:45:46.430388  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2607824 ptr=0x50000027cad0
+I20260307 04:45:46.430414  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2607840 ptr=0x50000027cae0
+I20260307 04:45:46.443943  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2608896 ptr=0x50000027cf00
+I20260307 04:45:46.443969  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2608912 ptr=0x50000027cf10
+I20260307 04:45:46.460563  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2609968 ptr=0x50000027d330
+I20260307 04:45:46.460588  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2609984 ptr=0x50000027d340
+I20260307 04:45:46.636672  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2615328 ptr=0x50000027e820
+I20260307 04:45:46.636739  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2615344 ptr=0x50000027e830
+I20260307 04:45:46.641479  2998 Coordinator.h:307] commit: 9 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 456, avg network size: 50.6667, si_in_serializable: 0 0 %, local: 0 %, local_access: 70, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 18 (90%), data_move_in: 20, data_move_out: 0
+I20260307 04:45:46.652559  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2616400 ptr=0x50000027ec50
+I20260307 04:45:46.652585  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2616416 ptr=0x50000027ec60
+I20260307 04:45:46.664299  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2617472 ptr=0x50000027f080
+I20260307 04:45:46.664325  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2617488 ptr=0x50000027f090
+I20260307 04:45:46.678654  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2618544 ptr=0x50000027f4b0
+I20260307 04:45:46.678682  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2618560 ptr=0x50000027f4c0
+I20260307 04:45:46.695022  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2619616 ptr=0x50000027f8e0
+I20260307 04:45:46.695050  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2619632 ptr=0x50000027f8f0
+I20260307 04:45:46.896917  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2626048 ptr=0x500000281200
+I20260307 04:45:46.896981  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2626064 ptr=0x500000281210
+I20260307 04:45:46.913568  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2627120 ptr=0x500000281630
+I20260307 04:45:46.913605  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2627136 ptr=0x500000281640
+I20260307 04:45:46.929852  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2628192 ptr=0x500000281a60
+I20260307 04:45:46.929891  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2628208 ptr=0x500000281a70
+I20260307 04:45:46.947420  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2629264 ptr=0x500000281e90
+I20260307 04:45:46.947451  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2629280 ptr=0x500000281ea0
+I20260307 04:45:46.959733  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2630336 ptr=0x5000002822c0
+I20260307 04:45:46.959758  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2630352 ptr=0x5000002822d0
+I20260307 04:45:47.167495  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2636768 ptr=0x500000283be0
+I20260307 04:45:47.167565  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2636784 ptr=0x500000283bf0
+I20260307 04:45:47.182305  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2637840 ptr=0x500000284010
+I20260307 04:45:47.182332  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2637856 ptr=0x500000284020
+I20260307 04:45:47.198182  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2638912 ptr=0x500000284440
+I20260307 04:45:47.198223  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2638928 ptr=0x500000284450
+I20260307 04:45:47.214119  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2639984 ptr=0x500000284870
+I20260307 04:45:47.214146  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2640000 ptr=0x500000284880
+I20260307 04:45:47.231244  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2641056 ptr=0x500000284ca0
+I20260307 04:45:47.231279  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2641072 ptr=0x500000284cb0
+I20260307 04:45:47.433666  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2647488 ptr=0x5000002865c0
+I20260307 04:45:47.433732  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2647504 ptr=0x5000002865d0
+I20260307 04:45:47.451385  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2648560 ptr=0x5000002869f0
+I20260307 04:45:47.451439  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2648576 ptr=0x500000286a00
+I20260307 04:45:47.465664  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2649632 ptr=0x500000286e20
+I20260307 04:45:47.465726  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2649648 ptr=0x500000286e30
+I20260307 04:45:47.482228  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2650704 ptr=0x500000287250
+I20260307 04:45:47.482256  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2650720 ptr=0x500000287260
+I20260307 04:45:47.496205  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2651776 ptr=0x500000287680
+I20260307 04:45:47.496243  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2651792 ptr=0x500000287690
+I20260307 04:45:47.641625  2998 Coordinator.h:307] commit: 9 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 456, avg network size: 50.6667, si_in_serializable: 0 0 %, local: 0 %, local_access: 70, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 20, data_move_out: 0
+I20260307 04:45:47.693905  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2658208 ptr=0x500000288fa0
+I20260307 04:45:47.693966  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2658224 ptr=0x500000288fb0
+I20260307 04:45:47.707103  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2659280 ptr=0x5000002893d0
+I20260307 04:45:47.707134  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2659296 ptr=0x5000002893e0
+I20260307 04:45:47.724449  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2660352 ptr=0x500000289800
+I20260307 04:45:47.724483  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2660368 ptr=0x500000289810
+I20260307 04:45:47.737914  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2661424 ptr=0x500000289c30
+I20260307 04:45:47.737941  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2661440 ptr=0x500000289c40
+I20260307 04:45:47.756464  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2662496 ptr=0x50000028a060
+I20260307 04:45:47.756491  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2662512 ptr=0x50000028a070
+I20260307 04:45:47.955346  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2668928 ptr=0x50000028b980
+I20260307 04:45:47.955416  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2668944 ptr=0x50000028b990
+I20260307 04:45:47.968154  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2670000 ptr=0x50000028bdb0
+I20260307 04:45:47.968194  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2670016 ptr=0x50000028bdc0
+I20260307 04:45:47.980219  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2671072 ptr=0x50000028c1e0
+I20260307 04:45:47.980247  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2671088 ptr=0x50000028c1f0
+I20260307 04:45:47.996598  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2672144 ptr=0x50000028c610
+I20260307 04:45:47.996634  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2672160 ptr=0x50000028c620
+I20260307 04:45:48.187018  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2678576 ptr=0x50000028df30
+I20260307 04:45:48.187085  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2678592 ptr=0x50000028df40
+I20260307 04:45:48.201747  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2679648 ptr=0x50000028e360
+I20260307 04:45:48.201792  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2679664 ptr=0x50000028e370
+I20260307 04:45:48.213055  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2680720 ptr=0x50000028e790
+I20260307 04:45:48.213097  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2680736 ptr=0x50000028e7a0
+I20260307 04:45:48.228667  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2681792 ptr=0x50000028ebc0
+I20260307 04:45:48.228706  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2681808 ptr=0x50000028ebd0
+I20260307 04:45:48.241771  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2682864 ptr=0x50000028eff0
+I20260307 04:45:48.241801  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2682880 ptr=0x50000028f000
+I20260307 04:45:48.434836  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2689296 ptr=0x500000290910
+I20260307 04:45:48.434898  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2689312 ptr=0x500000290920
+I20260307 04:45:48.445595  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2690368 ptr=0x500000290d40
+I20260307 04:45:48.445652  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2690384 ptr=0x500000290d50
+I20260307 04:45:48.460914  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2691440 ptr=0x500000291170
+I20260307 04:45:48.460940  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2691456 ptr=0x500000291180
+I20260307 04:45:48.479491  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2692512 ptr=0x5000002915a0
+I20260307 04:45:48.479535  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2692528 ptr=0x5000002915b0
+I20260307 04:45:48.492051  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2693584 ptr=0x5000002919d0
+I20260307 04:45:48.492085  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2693600 ptr=0x5000002919e0
+I20260307 04:45:48.641769  2998 Coordinator.h:307] commit: 9 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 53.3333, si_in_serializable: 0 0 %, local: 0 %, local_access: 70, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 19, data_move_out: 0
+I20260307 04:45:48.687882  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2700016 ptr=0x5000002932f0
+I20260307 04:45:48.687922  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2700032 ptr=0x500000293300
+I20260307 04:45:48.705226  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2701088 ptr=0x500000293720
+I20260307 04:45:48.705253  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2701104 ptr=0x500000293730
+I20260307 04:45:48.722054  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2702160 ptr=0x500000293b50
+I20260307 04:45:48.722095  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2702176 ptr=0x500000293b60
+I20260307 04:45:48.736332  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2703232 ptr=0x500000293f80
+I20260307 04:45:48.736369  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2703248 ptr=0x500000293f90
+I20260307 04:45:48.754786  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2704304 ptr=0x5000002943b0
+I20260307 04:45:48.754817  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2704320 ptr=0x5000002943c0
+I20260307 04:45:48.942034  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2710736 ptr=0x500000295cd0
+I20260307 04:45:48.942096  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2710752 ptr=0x500000295ce0
+I20260307 04:45:48.955166  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2711808 ptr=0x500000296100
+I20260307 04:45:48.955194  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2711824 ptr=0x500000296110
+I20260307 04:45:48.970685  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2712880 ptr=0x500000296530
+I20260307 04:45:48.970711  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2712896 ptr=0x500000296540
+I20260307 04:45:48.988363  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2713952 ptr=0x500000296960
+I20260307 04:45:48.988397  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2713968 ptr=0x500000296970
+I20260307 04:45:49.002856  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2715024 ptr=0x500000296d90
+I20260307 04:45:49.002887  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2715040 ptr=0x500000296da0
+I20260307 04:45:49.201958  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2721456 ptr=0x5000002986b0
+I20260307 04:45:49.202020  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2721472 ptr=0x5000002986c0
+I20260307 04:45:49.217561  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2722528 ptr=0x500000298ae0
+I20260307 04:45:49.217592  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2722544 ptr=0x500000298af0
+I20260307 04:45:49.230903  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2723600 ptr=0x500000298f10
+I20260307 04:45:49.230932  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2723616 ptr=0x500000298f20
+I20260307 04:45:49.249292  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2724672 ptr=0x500000299340
+I20260307 04:45:49.249322  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2724688 ptr=0x500000299350
+I20260307 04:45:49.260917  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2725744 ptr=0x500000299770
+I20260307 04:45:49.260944  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2725760 ptr=0x500000299780
+I20260307 04:45:49.461831  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2732176 ptr=0x50000029b090
+I20260307 04:45:49.461905  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2732192 ptr=0x50000029b0a0
+I20260307 04:45:49.475250  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2733248 ptr=0x50000029b4c0
+I20260307 04:45:49.475281  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2733264 ptr=0x50000029b4d0
+I20260307 04:45:49.490550  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2734320 ptr=0x50000029b8f0
+I20260307 04:45:49.490577  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2734336 ptr=0x50000029b900
+I20260307 04:45:49.505280  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2735392 ptr=0x50000029bd20
+I20260307 04:45:49.505306  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2735408 ptr=0x50000029bd30
+I20260307 04:45:49.519647  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2736464 ptr=0x50000029c150
+I20260307 04:45:49.519686  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2736480 ptr=0x50000029c160
+I20260307 04:45:49.641907  2998 Coordinator.h:307] commit: 8 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 60, si_in_serializable: 0 0 %, local: 0 %, local_access: 60, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 20, data_move_out: 0
+I20260307 04:45:49.720770  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2742896 ptr=0x50000029da70
+I20260307 04:45:49.720832  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2742912 ptr=0x50000029da80
+I20260307 04:45:49.736704  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2743968 ptr=0x50000029dea0
+I20260307 04:45:49.736734  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2743984 ptr=0x50000029deb0
+I20260307 04:45:49.752512  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2745040 ptr=0x50000029e2d0
+I20260307 04:45:49.752547  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2745056 ptr=0x50000029e2e0
+I20260307 04:45:49.766867  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2746112 ptr=0x50000029e700
+I20260307 04:45:49.766897  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2746128 ptr=0x50000029e710
+I20260307 04:45:49.777660  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2747184 ptr=0x50000029eb30
+I20260307 04:45:49.777688  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2747200 ptr=0x50000029eb40
+I20260307 04:45:49.986092  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2753616 ptr=0x5000002a0450
+I20260307 04:45:49.986158  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2753632 ptr=0x5000002a0460
+I20260307 04:45:50.004829  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2754688 ptr=0x5000002a0880
+I20260307 04:45:50.004879  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2754704 ptr=0x5000002a0890
+I20260307 04:45:50.026368  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2755760 ptr=0x5000002a0cb0
+I20260307 04:45:50.026417  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2755776 ptr=0x5000002a0cc0
+I20260307 04:45:50.037897  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2756832 ptr=0x5000002a10e0
+I20260307 04:45:50.037923  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2756848 ptr=0x5000002a10f0
+I20260307 04:45:50.048244  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2757904 ptr=0x5000002a1510
+I20260307 04:45:50.048270  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2757920 ptr=0x5000002a1520
+I20260307 04:45:50.237214  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2764336 ptr=0x5000002a2e30
+I20260307 04:45:50.237278  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2764352 ptr=0x5000002a2e40
+I20260307 04:45:50.253754  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2765408 ptr=0x5000002a3260
+I20260307 04:45:50.253788  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2765424 ptr=0x5000002a3270
+I20260307 04:45:50.270675  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2766480 ptr=0x5000002a3690
+I20260307 04:45:50.270705  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2766496 ptr=0x5000002a36a0
+I20260307 04:45:50.282653  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2767552 ptr=0x5000002a3ac0
+I20260307 04:45:50.282692  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2767568 ptr=0x5000002a3ad0
+I20260307 04:45:50.476158  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2773984 ptr=0x5000002a53e0
+I20260307 04:45:50.476231  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2774000 ptr=0x5000002a53f0
+I20260307 04:45:50.488569  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2775056 ptr=0x5000002a5810
+I20260307 04:45:50.488597  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2775072 ptr=0x5000002a5820
+I20260307 04:45:50.501191  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2776128 ptr=0x5000002a5c40
+I20260307 04:45:50.501231  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2776144 ptr=0x5000002a5c50
+I20260307 04:45:50.515659  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2777200 ptr=0x5000002a6070
+I20260307 04:45:50.515697  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2777216 ptr=0x5000002a6080
+I20260307 04:45:50.528182  3004 CXLMemory.h:297] Bump alloc: size=8 base=0x500000000000 offset=2778272 ptr=0x5000002a64a0
+I20260307 04:45:50.528227  3004 CXLMemory.h:297] Bump alloc: size=1050 base=0x500000000000 offset=2778288 ptr=0x5000002a64b0
+I20260307 04:45:50.642041  2998 Coordinator.h:307] commit: 14 abort: 0 (0/0/0), persistence latency 0, txn latency 0, queued lock latency 0, lock latency 0, active_txns 0, n_failed_read_lock 0, n_failed_write_lock 0, n_failed_cmd_not_ready 0, n_failed_no_cmd 0, network size: 480, avg network size: 34.2857, si_in_serializable: 0 0 %, local: 0 %, local_access: 120, local_cxl_access: 0 (0%), remote_access: 20, remote_access_with_req: 20 (100%), data_move_in: 19, data_move_out: 0
+I20260307 04:45:50.642107  2998 Coordinator.h:345] average commit: 8.1 abort: 0 (0/0/0), abort_rate: 0, network size: 4608, avg network size: 56.8889, si_in_serializable: 0 0 %, local: 0 %, local_access: 615, local_cxl_access: 0 (0%), remote_access: 195, remote_access_with_req: 192 (98.4615%), data_move_in: 192, data_move_out: 0
+I20260307 04:45:50.642112  2998 Executor.h:233] Worker 0 latency: 48 us (50%) 254869 us (75%) 255987 us (95%) 255987 us (99%). dist txn latency: 263775 us (50%) 265760 us (75%) 283440 us (95%) 283440 us (99%)  avg 259213 us . local txn latency: 50 us (50%) 305 us (75%) 321 us (95%) 321 us (99%)  avg 123 us. txn commit latency: 321 us (50%) 254869 us (75%) 274758 us (95%) 274758 us (99%) avg 103930 us.
+ LOCAL txn stall 0 us,  local_work 12 us,  remote_work 0 us,  commit_work 21 us,  commit_prepare 0 us,  commit_persistence 0 us,  commit_write_back 0 us,  commit_replication 0 us,  commit_release_lock 0 us 
+ DIST txn stall 0 us,  local_work 2951 us,  remote_work 232447 us,  commit_work 1824 us,  commit_prepare 0 us,  commit_persistence 0 us,  commit_write_back 0 us,  commit_replication 0 us,  commit_release_lock 704 us 
+I20260307 04:45:50.642131  2998 Executor.h:264] message stats, type: 0 count: 0 total size: 0
+I20260307 04:45:50.642134  2998 Executor.h:264] message stats, type: 1 count: 0 total size: 0
+I20260307 04:45:50.642135  2998 Executor.h:264] message stats, type: 2 count: 0 total size: 0
+I20260307 04:45:50.642136  2998 Executor.h:264] message stats, type: 3 count: 0 total size: 0
+I20260307 04:45:50.642138  2998 Executor.h:264] message stats, type: 4 count: 304 total size: 7296
+I20260307 04:45:50.642139  2998 Executor.h:264] message stats, type: 5 count: 306 total size: 3978
+I20260307 04:45:50.642140  2998 Executor.h:264] message stats, type: 6 count: 0 total size: 0
+I20260307 04:45:50.642141  2998 Executor.h:264] message stats, type: 7 count: 0 total size: 0
+I20260307 04:45:50.642143  2998 Executor.h:264] message stats, type: 8 count: 0 total size: 0
+I20260307 04:45:50.642144  2998 Executor.h:264] message stats, type: 9 count: 0 total size: 0
+I20260307 04:45:50.642145  2998 Executor.h:264] message stats, type: 10 count: 0 total size: 0
+I20260307 04:45:50.642146  2998 Executor.h:264] message stats, type: 11 count: 0 total size: 0
+I20260307 04:45:50.746719  3005 Manager.h:234] Manager(worker id = 1) on the non-coordinator node exits.
+I20260307 04:45:50.746719  3004 CXL_EBR.h:183] EBR Statistics for worker 0: GC size 100% = 0 99% = 0 50% = 0 avg = 0 max = 0
+I20260307 04:45:50.746762  3004 Executor.h:228] Executor 0 exits.
+I20260307 04:45:50.746834  2998 CXLMemory.h:675] local CXL memory usage: size_index_usage: 15024 size_metadata_usage: 4864 size_data_usage: 319200 size_transport_usage: 0 size_misc_usage: 0 total_size_hw_cc_usage: 19888 total_usage: 339088
+I20260307 04:45:50.746840  2998 SCCManager.h:40] software cache-coherence statistics: num_clflush: 311 num_clwb: 304 num_cache_hit: 35 num_cache_miss: 311 cache hit rate: 10.1156%
+I20260307 04:45:50.749492  3003 Dispatcher.h:237] Handling coordinator message took 1346
+I20260307 04:45:51.746960  3003 Dispatcher.h:268] Outgoing Dispatcher exits, network size: 18668. msg_send_latency(50th) 0 msg_send_latency(75th) 0 msg_send_latency(95th) 0 msg_send_latency(99th) 0 msg_send_latency(avg) 0 msg_gen_to_sent_latency(50th) 219525 msg_gen_to_sent_latency(75th) 282374 msg_gen_to_sent_latency(95th) 287331 msg_gen_to_sent_latency(99th) 287331 msg_gen_to_queue_latency(50th) 0 msg_gen_to_queue_latency(75th) 0 msg_gen_to_queue_latency(95th) 0 msg_gen_to_queue_latency(99th) 0 msg_disp_ltc(50th) 0 msg_disp_ltc(75th) 0 msg_disp_ltc(95th) 0 msg_disp_ltc(99th) 0 msg_disp_ltc(100th) 0 send_ltc(50th) 1848 send_ltc(75th) 2008 send_ltc(95th) 2080 send_ltc(99th) 2080 send_ltc(100th) 2080 send_ltc(avg) 1850 sendto_cnt 127 network_size 18668 network_msg_cnt 127 network_msg_group_size avg 0 50th 1 internal_network_size 0 internal_network_msg_cnt 0
+I20260307 04:45:51.746965  3002 Dispatcher.h:154] Incoming Dispatcher exits, network size: 18471. socket_message_recv_latency(50th) 3531 socket_message_recv_latency(75th) 3675 socket_message_recv_latency(95th) 4000 socket_message_recv_latency(99th) 4000 internal_message_recv_latency(50th) 0 socket_message_recv_cnt 8 socket_read_syscall 549485 internal_message_recv_cnt 0
+I20260307 04:45:51.781002  2998 Coordinator.h:407] Coordinator exits.
